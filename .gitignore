@@ -1,2 +1,5 @@
 *.o
 kernel.bin
+Makefile
+.vscode
+mpx.sh
