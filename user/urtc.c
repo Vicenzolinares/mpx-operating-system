@@ -151,7 +151,9 @@ int set_date(int month, int day, int year)
             break;
     }
 
-    // year must be set first as rtc has its own checks for leap years
+    // prevents rtc from rolling over invalid dates
+    set_day(1);
+
     set_year(year);
     set_month(month);
     set_day(day);
