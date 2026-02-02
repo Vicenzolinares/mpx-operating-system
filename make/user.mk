@@ -6,6 +6,10 @@ user/core.o: user/core.c include/string.h include/mpx/serial.h \
 user/comhand.o: user/comhand.c include/comhand.h include/sys_req.h \
   include/mpx/device.h include/string.h include/urtc.h
 
+user/urtc.o: user/urtc.c include/urtc.h include/mpx/krtc.h \
+  include/sys_req.h include/string.h
+
 USER_OBJECTS=\
-  user/core.o \
+	user/core.o\
+  user/urtc.o\
   user/comhand.o
