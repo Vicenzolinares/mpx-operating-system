@@ -62,15 +62,114 @@ int serial_out(device dev, const char *buffer, size_t len)
 
 int serial_poll(device dev, char *buffer, size_t len)
 {
-	// insert your code to gather keyboard input via the technique of polling.
-	// You must validate each key and handle special keys such as delete, back space, and
-	// arrow keys
+	// Validate input parameters
+	if (!buffer || len == 0) {
+		return -1;
+	}
 
-	// REMOVE THIS -- IT ONLY EXISTS TO AVOID UNUSED PARAMETER WARNINGS
-	// Failure to remove this comment and the following line *will* result in
-	// losing points for inattention to detail
-	(void)dev; (void)buffer;
+	int dno = serial_devno(dev);
+	if (dno == -1 || initialized[dno] == 0) {
+		return -1;
+	}
 
-	// THIS MUST BE CHANGED TO RETURN THE CORRECT VALUE
-	return (int)len;
+	size_t pos = 0;  // Position in buffer
+
+	// Poll for keyboard input until buffer is full or Enter is pressed
+	while (pos < len - 1) {
+		// Poll (LSR) bit 0 to check if data is available
+		if (!(inb(dev + LSR) & 0x01)) {
+			continue;  // No data available, continue polling
+		}
+
+		// Read the character from the Receive Buffer Register (RBR)
+		unsigned char ch = inb(dev);
+
+		// Handle Enter/Return key - complete the input
+		if (ch == '\r' || ch == '\n') {
+			buffer[pos] = '\0';  // Terminate the string
+			// Echo newline
+			char crlf[2] = {'\r', '\n'};
+			serial_out(dev, crlf, 2);
+			return (int)pos;
+		}
+
+		// Handle Backspace (0x08) or Delete character (0x7F)
+		if (ch == 0x08 || ch == 0x7F) {
+			if (pos > 0) {
+				pos--;  // Move back one position
+				// Echo backspace
+				char bs[3] = {'\b', ' ', '\b'};
+				serial_out(dev, bs, 3);
+			}
+			continue;
+		}
+
+		// Handle Escape sequences (for arrow keys and Delete key)
+		// Linux/Ubuntu terminals use ANSI escape sequences
+		if (ch == 0x1B) {  // ESC character
+			// Wait for the next character in the sequence
+			while (!(inb(dev + LSR) & 0x01));
+			unsigned char next = inb(dev);
+
+			if (next == '[') {  
+				while (!(inb(dev + LSR) & 0x01));
+				unsigned char code = inb(dev);
+
+				
+				if (code == 'A') {  // Up arrow (ESC[A)
+					
+					continue;
+				} else if (code == 'B') {  // Down arrow (ESC[B)
+					continue;
+				} else if (code == 'C') {  // Right arrow (ESC[C)
+					
+					continue;
+				} else if (code == 'D') {  // Left arrow (ESC[D)
+					
+					continue;
+				} else if (code >= '0' && code <= '9') {
+					
+					while ((code >= '0' && code <= '9') || code == ';') {
+						if (!(inb(dev + LSR) & 0x01)) break;
+						code = inb(dev);
+					}
+					// Check if this is the Delete key sequence (ESC[3~)
+					if (code == '~') {
+						// Delete key pressed - same behavior as backspace
+						if (pos > 0) {
+							pos--;
+							char bs[3] = {'\b', ' ', '\b'};
+							serial_out(dev, bs, 3);
+						}
+					}
+				
+					continue;
+				}
+				
+			}
+			continue;  // Escape sequence handled, continue polling
+		}
+
+		// Validate and filter out other control characters (except printable ones)
+		// Control characters are 0x00-0x1F and 0x7F, but we've already handled some
+		if (ch < 32 || ch == 127) {
+			continue;  // Ignore other control characters
+		}
+
+		// Handle normal printable characters
+		// Check if we have space in the buffer
+		if (pos >= len - 1) {
+			// Buffer is full, send bell character to indicate
+			serial_out(dev, "\a", 1);
+			break;
+		}
+
+		// Store the character and echo it back
+		buffer[pos++] = ch;
+		serial_out(dev, (char *)&ch, 1);
+	}
+
+	// Null-terminate the buffer
+	buffer[pos] = '\0';
+	return (int)pos;
 }
