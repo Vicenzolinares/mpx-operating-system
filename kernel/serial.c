@@ -72,11 +72,11 @@ int serial_poll(device dev, char *buffer, size_t len)
 		return -1;
 	}
 
-	size_t pos = 0;  // Current position in buffer
+	size_t pos = 0;  // Position in buffer
 
 	// Poll for keyboard input until buffer is full or Enter is pressed
 	while (pos < len - 1) {
-		// Poll the Line Status Register (LSR) bit 0 to check if data is available
+		// Poll (LSR) bit 0 to check if data is available
 		if (!(inb(dev + LSR) & 0x01)) {
 			continue;  // No data available, continue polling
 		}
@@ -86,8 +86,8 @@ int serial_poll(device dev, char *buffer, size_t len)
 
 		// Handle Enter/Return key - complete the input
 		if (ch == '\r' || ch == '\n') {
-			buffer[pos] = '\0';  // Null-terminate the string
-			// Echo the newline
+			buffer[pos] = '\0';  // Terminate the string
+			// Echo newline
 			char crlf[2] = {'\r', '\n'};
 			serial_out(dev, crlf, 2);
 			return (int)pos;
@@ -97,7 +97,7 @@ int serial_poll(device dev, char *buffer, size_t len)
 		if (ch == 0x08 || ch == 0x7F) {
 			if (pos > 0) {
 				pos--;  // Move back one position
-				// Echo backspace: move cursor back, space, move cursor back again
+				// Echo backspace
 				char bs[3] = {'\b', ' ', '\b'};
 				serial_out(dev, bs, 3);
 			}
@@ -111,28 +111,24 @@ int serial_poll(device dev, char *buffer, size_t len)
 			while (!(inb(dev + LSR) & 0x01));
 			unsigned char next = inb(dev);
 
-			if (next == '[') {  // ANSI escape sequence
-				// Wait for the command character(s)
+			if (next == '[') {  
 				while (!(inb(dev + LSR) & 0x01));
 				unsigned char code = inb(dev);
 
-				// Handle arrow keys - Linux terminals send ESC[A/B/C/D
-				// Extended sequences like ESC[1;2A (with modifiers) are also possible
+				
 				if (code == 'A') {  // Up arrow (ESC[A)
-					// Arrow keys are typically used for command history
-					// For now, we just consume the sequence without action
+					
 					continue;
 				} else if (code == 'B') {  // Down arrow (ESC[B)
 					continue;
 				} else if (code == 'C') {  // Right arrow (ESC[C)
-					// Could be used for cursor movement in the future
+					
 					continue;
 				} else if (code == 'D') {  // Left arrow (ESC[D)
-					// Could be used for cursor movement in the future
+					
 					continue;
 				} else if (code >= '0' && code <= '9') {
-					// Handle sequences that start with numbers (e.g., ESC[3~ for Delete)
-					// Consume any additional numbers and semicolons (for extended sequences)
+					
 					while ((code >= '0' && code <= '9') || code == ';') {
 						if (!(inb(dev + LSR) & 0x01)) break;
 						code = inb(dev);
@@ -146,10 +142,10 @@ int serial_poll(device dev, char *buffer, size_t len)
 							serial_out(dev, bs, 3);
 						}
 					}
-					// For other numeric sequences ending in ~, just consume them
+				
 					continue;
 				}
-				// For any other escape sequence characters, just consume and continue
+				
 			}
 			continue;  // Escape sequence handled, continue polling
 		}
@@ -164,8 +160,7 @@ int serial_poll(device dev, char *buffer, size_t len)
 		// Check if we have space in the buffer
 		if (pos >= len - 1) {
 			// Buffer is full, send bell character to indicate
-			char bell = '\a';
-			serial_out(dev, &bell, 1);
+			serial_out(dev, "\a", 1);
 			break;
 		}
 
