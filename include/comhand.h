@@ -5,6 +5,7 @@
 #include <sys_req.h>
 #include <mpx/device.h>
 #include <urtc.h>
+#include <stdlib.h>
 
 #define WHITESPACE_CHARS " \r\n\t"
 #define BUFFER_SIZE 100
