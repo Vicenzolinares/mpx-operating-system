@@ -10,20 +10,13 @@ static void mpx_write(const char *s)
 
 void cmd_help(void)
 {
-	mpx_write("Commands:\r\n"); 
-
-	mpx_write("  date get - Displays the current system date\r\n"); 
-
+	mpx_write("Commands:\r\n");
+	mpx_write("  date get - Displays the current system date\r\n");
 	mpx_write("  date set <month> <day> <year> - Sets the system date mm dd yy\r\n");
-
-	mpx_write("  help - Shows this list of available commands\r\n"); 
-
-	mpx_write("  shutdown - Shuts down the system and prompts for the confirmation\r\n"); 
-
-	mpx_write("  time get - Displays the current system time\r\n"); 
-
+	mpx_write("  help - Shows this list of available commands\r\n");
+	mpx_write("  shutdown - Shuts down the system and prompts for the confirmation\r\n");
+	mpx_write("  time get - Displays the current system time\r\n");
 	mpx_write("  time set <hour> <minute> <second> - Sets the system time hh mm ss\r\n");
-
 	mpx_write("  version - Shows build/version information\r\n");
 }
 
@@ -44,14 +37,15 @@ void comhand(void)
 		char buf[BUFFER_SIZE] = { 0 };
 		int nread = sys_req(READ, COM1, buf, BUFFER_SIZE);
 
-		sys_req(WRITE, COM1, buf, nread);
-
 		char *parse_string_ptr = strtok(buf, WHITESPACE_CHARS);
 
+		// no command
 		if (parse_string_ptr == NULL)
 		{
 			// new line for empty command
 		}
+
+		// help command
 		else if (strcmp(parse_string_ptr, "help") == 0)
 		{
 			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
@@ -62,6 +56,8 @@ void comhand(void)
 			}
 			cmd_help();
 		}
+
+		// version command
 		else if (strcmp(parse_string_ptr, "version") == 0)
 		{
 			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
@@ -72,6 +68,8 @@ void comhand(void)
 			}
 			cmd_version();
 		}
+
+		// date command
 		else if (strcmp(parse_string_ptr, "date") == 0)
 		{
 			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
@@ -81,6 +79,7 @@ void comhand(void)
 				continue;
 			}
 
+			// date get subcommand
 			if (strcmp(parse_string_ptr, "get") == 0)
 			{
 				parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
@@ -92,6 +91,8 @@ void comhand(void)
 
 				get_date();
 			}
+
+			// date set subcommand
 			else if (strcmp(parse_string_ptr, "set") == 0)
 			{
 				int month, day, year;
@@ -130,13 +131,19 @@ void comhand(void)
 					continue;
 				}
 
-				set_date(month, day, year);
+				if (set_date(month, day, year) == 0)
+				{
+					mpx_write("Date set to: ");
+					get_date();
+				}
 			}
 			else
 			{
 				mpx_write("Error: Unknown subcommand for 'date'.\r\n");
 			}
 		}
+
+		// time command
 		else if (strcmp(parse_string_ptr, "time") == 0)
 		{
 			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
@@ -146,6 +153,7 @@ void comhand(void)
 				continue;
 			}
 
+			// time get subcommand
 			if (strcmp(parse_string_ptr, "get") == 0)
 			{
 				parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
@@ -157,6 +165,8 @@ void comhand(void)
 
 				get_time();
 			}
+
+			// time set subcommand
 			else if (strcmp(parse_string_ptr, "set") == 0)
 			{
 				int hour, minute, second;
@@ -195,13 +205,19 @@ void comhand(void)
 					continue;
 				}
 
-				set_time(hour, minute, second);
+				if (set_time(hour, minute, second) == 0)
+				{
+					mpx_write("Time set to: ");
+					get_time();
+				}
 			}
 			else
 			{
 				mpx_write("Error: Unknown subcommand for 'date'.\r\n");
 			}
 		}
+
+		// shutdown command
 		else if (strcmp(parse_string_ptr, "shutdown") == 0)
 		{
 			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
@@ -227,6 +243,8 @@ void comhand(void)
 				mpx_write("Shutdown cancelled.\r\n");
 			}
 		}
+
+		// unknown command
 		else
 		{
 			mpx_write("Unknown command.\r\n");
