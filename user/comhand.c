@@ -20,8 +20,8 @@ void cmd_help(void)
 	mpx_write("  date set <month> <day> <year> - Sets the system date mm dd yy\r\n");
 	mpx_write("  help - Shows this list of available commands\r\n");
 	mpx_write("  shutdown - Shuts down the system and prompts for the confirmation\r\n");
-	mpx_write("  time get - Displays the current system time\r\n");
-	mpx_write("  time set <hour> <minute> <second> - Sets the system time hh mm ss\r\n");
+	mpx_write("  time get - Displays the current system time [in UTC time]\r\n");
+	mpx_write("  time set <hour> <minute> <second> - Sets the system time hh mm ss [in UTC time]\r\n");
 	mpx_write("  version - Shows build/version information\r\n");
 }
 
