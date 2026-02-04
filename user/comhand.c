@@ -1,5 +1,10 @@
 #include <comhand.h>
 
+
+/**
+ Helper function to write a string to COM1
+ @param s The string to write
+*/
 static void mpx_write(const char *s)
 {
 	if (s == NULL)
@@ -35,7 +40,7 @@ void comhand(void)
 	for (;;)
 	{
 		char buf[BUFFER_SIZE] = { 0 };
-		int nread = sys_req(READ, COM1, buf, BUFFER_SIZE);
+		sys_req(READ, COM1, buf, BUFFER_SIZE);
 
 		char *parse_string_ptr = strtok(buf, WHITESPACE_CHARS);
 
@@ -228,9 +233,7 @@ void comhand(void)
 			}
 
 			mpx_write("Confirm: Y/N\r\n");
-			nread = sys_req(READ, COM1, buf, BUFFER_SIZE);
-
-			sys_req(WRITE, COM1, buf, nread);
+			sys_req(READ, COM1, buf, BUFFER_SIZE);
 
 			parse_string_ptr = strtok(buf, WHITESPACE_CHARS);
 			if (parse_string_ptr != NULL && (strcmp(parse_string_ptr, "Y") == 0 || strcmp(parse_string_ptr, "y") == 0))
