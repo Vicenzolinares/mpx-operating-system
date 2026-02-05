@@ -218,7 +218,7 @@ void comhand(void)
 			}
 			else
 			{
-				mpx_write("Error: Unknown subcommand for 'date'.\r\n");
+				mpx_write("Error: Unknown subcommand for 'time'.\r\n");
 			}
 		}
 
