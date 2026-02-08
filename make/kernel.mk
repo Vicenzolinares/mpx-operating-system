@@ -14,10 +14,13 @@ kernel/core-c.o: kernel/core-c.c include/mpx/gdt.h include/mpx/panic.h \
 
 kenrel/krtc.o: kernel/krtc.c include/mpx/io.h include/mpx/interrupts.h
 
+kenrel/kpcb.o: kernel/kpcb.c
+
 KERNEL_OBJECTS=\
 	kernel/core-asm.o\
 	kernel/sys_call_isr.o\
 	kernel/serial.o\
 	kernel/kmain.o\
 	kernel/core-c.o\
-  kernel/krtc.o
+  kernel/krtc.o\
+  kernel/kpcb.o
