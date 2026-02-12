@@ -39,6 +39,7 @@ void comhand(void)
 {
 	for (;;)
 	{
+		mpx_write("mpx> ");
 		char buf[BUFFER_SIZE] = { 0 };
 		sys_req(READ, COM1, buf, BUFFER_SIZE);
 
