@@ -14,7 +14,7 @@ kernel/core-c.o: kernel/core-c.c include/mpx/gdt.h include/mpx/panic.h \
 
 kenrel/krtc.o: kernel/krtc.c include/mpx/io.h include/mpx/interrupts.h
 
-kenrel/kpcb.o: kernel/kpcb.c
+kenrel/kpcb.o: kernel/kpcb.c include/memory.h include/string.h
 
 KERNEL_OBJECTS=\
 	kernel/core-asm.o\
