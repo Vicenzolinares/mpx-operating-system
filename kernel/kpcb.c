@@ -94,3 +94,123 @@ PCB* pcb_find(const char *name)
 
     return NULL;
 }
+
+static void queue_insert(PCB *pcb, PCB_queue queue)
+{
+    //helper 
+
+    //empty queue
+    if (queue.head == NULL)
+    {   
+        queue.head = pcb;
+        queue.tail = pcb;
+        return;
+    }
+
+    //insert at front node (not empty queue)
+    if(pcb->priority < queue.head->priority)
+    {
+        pcb->next = queue.head;
+        queue.head->prev = pcb;
+        queue.head = pcb;
+        return;
+    }
+    
+    //iteration sequence
+    PCB* current = queue.head;
+
+    while(current != NULL && current->next->priority <= pcb->priority)
+    {
+        //insert at tail
+        if(current == NULL)
+        {
+            queue.tail->next = pcb;
+            pcb->prev = queue.tail;
+            queue.tail = pcb;
+            return;
+        }
+        //insert inbetween
+        if(current->next->priority > pcb->priority)
+        {
+            pcb->prev = current;
+            pcb->next = current->next;
+            current->next = pcb;
+            pcb->next->prev = pcb;
+            return; 
+        } 
+        //iterate
+        current = current->next;
+    }
+}
+
+void pcb_insert(PCB *pcb)
+{
+    if(pcb->execution == READY)
+    {
+        queue_insert(pcb, ready_queue);
+    }
+    if(pcb->execution == BLOCKED)
+    {
+        queue_insert(pcb, blocked_queue);    
+    }
+}
+
+static void queue_remove(PCB *pcb, PCB_queue queue)
+{
+    //remove head node (not empty queue)
+    if(pcb == queue.head)
+    {
+        queue.head = pcb->next;
+        queue.head->prev = NULL;
+        pcb->next = NULL;
+        return;
+    }
+    
+    //iteration sequence
+    PCB* current = queue.head;
+
+    while(current != NULL && current->next != pcb)
+    {
+        //remove tail mode
+        if(current == NULL)
+        {
+            queue.tail= pcb->prev;
+            queue.tail->next = NULL;
+            pcb->prev = NULL;
+            return;
+        }
+        //remove inbetween node
+        if(current->next == pcb)
+        {
+            current->next = pcb->next;
+            pcb->next->prev = current;
+            pcb->next = NULL;
+            pcb->prev = NULL;
+            return; 
+        } 
+        //iterate
+        current = current->next;
+     }
+}
+
+int pcb_remove(PCB *pcb)
+{
+    if(pcb == NULL)
+    {
+        return -1;
+    }
+    if(pcb->execution == RUNNING)
+    {
+        return -2;
+    }
+    if(pcb->execution == READY)
+    {
+        queue_remove(pcb, ready_queue);
+        return 0;
+    }
+    if(pcb->execution == BLOCKED)
+    {
+        queue_remove(pcb, blocked_queue);   
+        return 0; 
+    }
+}

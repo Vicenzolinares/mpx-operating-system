@@ -94,4 +94,17 @@ PCB* pcb_setup(const char *name, PCB_class class, int priority);
 */
 PCB* pcb_find(const char *name);
 
+/**
+ Inserts a PCB into the appropriate queue, based on state and (if Ready) priority
+ @param pcb A pointer to the PCB to enqueue
+ */
+void pcb_insert(PCB *pcb);
+
+/**
+ Removes a PCB from its current queue, but does not free any associated memory or data structures
+ @param pcb A pointer to the PCB to unqueue
+ @return 0 on success, non-zero on failure
+ */
+int pcb_remove(PCB *pcb);
+
 #endif
