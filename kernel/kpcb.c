@@ -206,11 +206,10 @@ int pcb_remove(PCB *pcb)
     if(pcb->execution == READY)
     {
         queue_remove(pcb, ready_queue);
-        return 0;
     }
     if(pcb->execution == BLOCKED)
     {
         queue_remove(pcb, blocked_queue);   
-        return 0; 
     }
+    return 0;
 }

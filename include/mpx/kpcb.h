@@ -80,7 +80,7 @@ int pcb_free(PCB *pcb);
 
 /**
  Sets up a PCB with the given name, class, and priority
- @param name The name of the PCB (must be exactly 8 characters excluding the null terminator)
+ @param name The name of the PCB
  @param class The class of the PCB (USER or SYSTEM)
  @param priority The priority of the PCB, 0 (highest) to 9 (lowest)
  @return Pointer to the initialized PCB, or NULL on failure

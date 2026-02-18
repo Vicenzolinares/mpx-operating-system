@@ -7,6 +7,35 @@
 #include <string.h>
 #include <sys_req.h>
 
+/**
+ @file upcb.h
+ @brief User-level PCB functions
+*/
+
+/**
+ Creates a new PCB and adds it to the proper queue
+ @param name The name of the PCB
+ @param class The class of the PCB (USER or SYSTEM)
+ @param priority The priority level of the PCB (0-9)
+ @return 0 on success, -1 for invalid parameters, -2 for failed PCB creation
+*/
 int create_pcb(const char* name, PCB_class class, int priority);
+
+/**
+ Removes a PCB from its queue and frees its memory, cannot be a system process
+ @param name The name of the PCB to delete
+ @return 0 on success, -1 for invalid name, -2 for PCB not found,
+         -3 for system process, non-zero from pcb_remove or pcb_free
+*/
+int delete_pcb(const char* name);
+
+/**
+ Sets the priority of a PCB
+ @param name The name of the PCB
+ @param priority The new priority level (0-9)
+ @return 0 on success, -1 for invalid parameters, -2 for PCB not found,
+         non-zero for failing to remove from queue
+*/
+int set_pcb_priority(const char* name, int priority);
 
 #endif
