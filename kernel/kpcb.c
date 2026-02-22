@@ -1,7 +1,9 @@
 #include <mpx/kpcb.h>
 
-PCB_queue ready_queue = { .head = NULL, .tail = NULL };
-PCB_queue blocked_queue = { .head = NULL, .tail = NULL };
+PCB_queue rqueue = { .head = NULL, .tail = NULL };
+PCB_queue *ready_queue = &rqueue;
+PCB_queue bqueue = { .head = NULL, .tail = NULL };
+PCB_queue *blocked_queue = &bqueue;
 
 PCB* pcb_allocate(void)
 {
@@ -72,7 +74,7 @@ PCB* pcb_setup(const char *name, PCB_class class, int priority)
 
 PCB* pcb_find(const char *name)
 {
-    PCB *current = ready_queue.head;
+    PCB *current = ready_queue->head;
     while (current != NULL)
     {
         if (strcmp(current->name, name) == 0)
@@ -82,7 +84,7 @@ PCB* pcb_find(const char *name)
         current = current->next;
     }
 
-    current = blocked_queue.head;
+    current = blocked_queue->head;
     while (current != NULL)
     {
         if (strcmp(current->name, name) == 0)
@@ -95,52 +97,54 @@ PCB* pcb_find(const char *name)
     return NULL;
 }
 
-static void queue_insert(PCB *pcb, PCB_queue queue)
+static void queue_insert(PCB *pcb, PCB_queue *queue)
 {
     //helper 
 
     //empty queue
-    if (queue.head == NULL)
+    if (queue->head == NULL)
     {   
-        queue.head = pcb;
-        queue.tail = pcb;
+        queue->head = pcb;
+        queue->tail = pcb;
         return;
     }
 
     //insert at front node (not empty queue)
-    if(pcb->priority < queue.head->priority)
+    if(pcb->priority < queue->head->priority)
     {
-        pcb->next = queue.head;
-        queue.head->prev = pcb;
-        queue.head = pcb;
+        pcb->next = queue->head;
+        queue->head->prev = pcb;
+        queue->head = pcb;
         return;
     }
     
     //iteration sequence
-    PCB* current = queue.head;
+    PCB* current = queue->head;
 
-    while(current != NULL && current->next->priority <= pcb->priority)
+    while(current->next != NULL && current->next->priority <= pcb->priority)
     {
-        //insert at tail
-        if(current == NULL)
-        {
-            queue.tail->next = pcb;
-            pcb->prev = queue.tail;
-            queue.tail = pcb;
-            return;
-        }
-        //insert inbetween
-        if(current->next->priority > pcb->priority)
-        {
-            pcb->prev = current;
-            pcb->next = current->next;
-            current->next = pcb;
-            pcb->next->prev = pcb;
-            return; 
-        } 
         //iterate
         current = current->next;
     }
+
+    //insert at tail
+    if(current->next == NULL)
+    {
+        queue->tail->next = pcb;
+        pcb->prev = queue->tail;
+        queue->tail = pcb;
+        return;
+    }
+
+    //insert inbetween
+    if(current->next->priority > pcb->priority)
+    {
+        pcb->prev = current;
+        pcb->next = current->next;
+        current->next = pcb;
+        pcb->next->prev = pcb;
+        return; 
+    } 
 }
 
 void pcb_insert(PCB *pcb)
@@ -155,42 +159,52 @@ void pcb_insert(PCB *pcb)
     }
 }
 
-static void queue_remove(PCB *pcb, PCB_queue queue)
+static void queue_remove(PCB *pcb, PCB_queue *queue)
 {
-    //remove head node (not empty queue)
-    if(pcb == queue.head)
+    // remove head and tail (only one node in queue)
+    if (pcb == queue->tail && pcb == queue->head)
     {
-        queue.head = pcb->next;
-        queue.head->prev = NULL;
+        queue->head = NULL;
+        queue->tail = NULL;
+        return;
+    }
+
+    //remove head node (not empty queue)
+    if(pcb == queue->head)
+    {
+        queue->head = pcb->next;
+        queue->head->prev = NULL;
         pcb->next = NULL;
         return;
     }
     
     //iteration sequence
-    PCB* current = queue.head;
+    PCB* current = queue->head;
 
-    while(current != NULL && current->next != pcb)
+    while(current->next != NULL && current->next != pcb)
     {
-        //remove tail mode
-        if(current == NULL)
-        {
-            queue.tail= pcb->prev;
-            queue.tail->next = NULL;
-            pcb->prev = NULL;
-            return;
-        }
-        //remove inbetween node
-        if(current->next == pcb)
-        {
-            current->next = pcb->next;
-            pcb->next->prev = current;
-            pcb->next = NULL;
-            pcb->prev = NULL;
-            return; 
-        } 
         //iterate
         current = current->next;
-     }
+    }
+
+    //remove tail node
+    if(pcb->next == NULL)
+    {
+        queue->tail = pcb->prev;
+        queue->tail->next = NULL;
+        pcb->prev = NULL;
+        return;
+    }
+
+    //remove inbetween node
+    if(current->next == pcb)
+    {
+        current->next = pcb->next;
+        pcb->next->prev = current;
+        pcb->next = NULL;
+        pcb->prev = NULL;
+        return; 
+    }
 }
 
 int pcb_remove(PCB *pcb)

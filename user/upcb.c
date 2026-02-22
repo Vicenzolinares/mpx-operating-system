@@ -284,7 +284,7 @@ void show_ready(void)
      char ready_hdr[] = "READY QUEUE\r\n";
     sys_req(WRITE, COM1, ready_hdr, strlen(ready_hdr));
     //loop through ready queue, use showpcb() + sys_req(\r\n) on each value, + msg incase queue is empty
-    PCB* pcb = ready_queue.head;
+    PCB* pcb = ready_queue->head;
     if (pcb == NULL)
     {
         char ready_err_msg[] = "Ready queue is empty\r\n\r\n";
@@ -304,7 +304,7 @@ void show_blocked(void)
     char blocked_hdr[] = "BLOCKED QUEUE\r\n";
     sys_req(WRITE, COM1, blocked_hdr, strlen(blocked_hdr));
     //loop through blocked queue, use showpcb() + sys_req(\r\n) on each value, + msg incase queue is empty
-    PCB* pcb = blocked_queue.head;
+    PCB* pcb = blocked_queue->head;
     if (pcb == NULL)
     {
         char blocked_err_msg[] = "Blocked queue is empty\r\n\r\n";

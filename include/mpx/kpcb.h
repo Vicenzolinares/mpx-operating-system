@@ -62,8 +62,8 @@ typedef struct PCB_queue {
 } PCB_queue;
 
 // All PCB queues
-extern PCB_queue ready_queue;
-extern PCB_queue blocked_queue;
+extern PCB_queue *ready_queue;
+extern PCB_queue *blocked_queue;
 
 /**
  Allocates memory for a new PCB and its stack, and initializes the stack to 0
