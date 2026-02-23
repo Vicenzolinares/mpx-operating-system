@@ -38,6 +38,38 @@ int delete_pcb(const char* name);
 */
 int set_pcb_priority(const char* name, int priority);
 
+/**
+ Sets a PCB's execution state to blocked
+ @param name The name of the PCB
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 if already blocked,
+         non-zero from pcb_remove
+*/
+int block_pcb(const char* name);
+
+/**
+ Sets a PCB's execution state to ready
+ @param name The name of the PCB
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 if already ready,
+         non-zero from pcb_remove
+*/
+int unblock_pcb(const char* name);
+
+/**
+ Sets a PCB's dispatching state to suspended
+ @param name The name of the PCB
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 if already suspended,
+         non-zero from pcb_remove
+*/
+int suspend_pcb(const char* name);
+
+/**
+ Sets a PCB's dispatching state to not suspended
+ @param name The name of the PCB
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 if already not suspended,
+         non-zero from pcb_remove
+*/
+int resume_pcb(const char* name);
+
 /** 
  Displays a person's name, class, state, suspended status, priority
  @param name The name of the pcb
@@ -59,5 +91,10 @@ void show_blocked(void);
  Shows all PCB information in both queues
 */
 void show_all(void);
+
+/**
+ Shows all suspended PCBs across both queues
+*/
+void show_suspended(void);
 
 #endif
