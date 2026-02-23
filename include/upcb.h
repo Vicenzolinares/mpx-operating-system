@@ -60,4 +60,32 @@ void show_blocked(void);
 */
 void show_all(void);
 
+/**
+ Blocks a READY PCB, changing its state to BLOCKED
+ @param name The name of the PCB to block
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 for invalid state
+*/
+int block_pcb(const char* name);
+
+/**
+ Unblocks a BLOCKED PCB, changing its state to READY
+ @param name The name of the PCB to unblock
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 for invalid state
+*/
+int unblock_pcb(const char* name);
+
+/**
+ Suspends a NOT_SUSPENDED PCB, changing its dispatch state to SUSPENDED
+ @param name The name of the PCB to suspend
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 for invalid state
+*/
+int suspend_pcb(const char* name);
+
+/**
+ Resumes a SUSPENDED PCB, changing its dispatch state to NOT_SUSPENDED
+ @param name The name of the PCB to resume
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 for invalid state
+*/
+int resume_pcb(const char* name);
+
 #endif

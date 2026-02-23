@@ -1,4 +1,5 @@
 #include <comhand.h>
+#include <upcb.h>
 
 
 /**
@@ -246,6 +247,90 @@ void comhand(void)
 			{
 				mpx_write("Shutdown cancelled.\r\n");
 			}
+		}
+
+		// block command
+		else if (strcmp(parse_string_ptr, "block") == 0)
+		{
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr == NULL)
+			{
+				mpx_write("Error! Block command takes 1 argument.\r\n");
+				continue;
+			}
+
+			char *name = parse_string_ptr;
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr != NULL)
+			{
+				mpx_write("Error! Block command takes 1 argument.\r\n");
+				continue;
+			}
+
+			block_pcb(name);
+		}
+
+		// unblock command
+		else if (strcmp(parse_string_ptr, "unblock") == 0)
+		{
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr == NULL)
+			{
+				mpx_write("Error! Unblock command takes 1 argument.\r\n");
+				continue;
+			}
+
+			char *name = parse_string_ptr;
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr != NULL)
+			{
+				mpx_write("Error! Unblock command takes 1 argument.\r\n");
+				continue;
+			}
+
+			unblock_pcb(name);
+		}
+
+		// suspend command
+		else if (strcmp(parse_string_ptr, "suspend") == 0)
+		{
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr == NULL)
+			{
+				mpx_write("Error! Suspend command takes 1 argument.\r\n");
+				continue;
+			}
+
+			char *name = parse_string_ptr;
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr != NULL)
+			{
+				mpx_write("Error! Suspend command takes 1 argument.\r\n");
+				continue;
+			}
+
+			suspend_pcb(name);
+		}
+
+		// resume command
+		else if (strcmp(parse_string_ptr, "resume") == 0)
+		{
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr == NULL)
+			{
+				mpx_write("Error! Resume command takes 1 argument.\r\n");
+				continue;
+			}
+
+			char *name = parse_string_ptr;
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr != NULL)
+			{
+				mpx_write("Error! Resume command takes 1 argument.\r\n");
+				continue;
+			}
+
+			resume_pcb(name);
 		}
 
 		// unknown command

@@ -324,3 +324,143 @@ void show_all(void)
     show_ready();
     show_blocked();
 }
+
+int block_pcb(const char* name)
+{
+    // check for valid name
+    if (is_valid_name(name) == false)
+    {
+        return -1;
+    }
+
+    // check for PCB existence
+    PCB *pcb = pcb_find(name);
+    if (pcb == NULL)
+    {
+        char pcb_not_found_err_msg[] = "PCB not found\r\n";
+        sys_req(WRITE, COM1, pcb_not_found_err_msg, strlen(pcb_not_found_err_msg));
+        return -2;
+    }
+
+    // must be READY to block
+    if (pcb->execution != READY)
+    {
+        char invalid_state_err_msg[] = "PCB needs to be in READY state to block\r\n";
+        sys_req(WRITE, COM1, invalid_state_err_msg, strlen(invalid_state_err_msg));
+        return -3;
+    }
+
+    // remove from ready queue
+    int result = pcb_remove(pcb);
+    if (result != 0)
+    {
+        char pcb_remove_err_msg[] = "Failed to remove PCB from queue\r\n";
+        sys_req(WRITE, COM1, pcb_remove_err_msg, strlen(pcb_remove_err_msg));
+        return result;
+    }
+
+    // change to BLOCKED and insert into blocked queue
+    pcb->execution = BLOCKED;
+    pcb_insert(pcb);
+    return 0;
+}
+
+int unblock_pcb(const char* name)
+{
+    // check for valid name
+    if (is_valid_name(name) == false)
+    {
+        return -1;
+    }
+
+    // check for PCB existence
+    PCB *pcb = pcb_find(name);
+    if (pcb == NULL)
+    {
+        char pcb_not_found_err_msg[] = "PCB not found\r\n";
+        sys_req(WRITE, COM1, pcb_not_found_err_msg, strlen(pcb_not_found_err_msg));
+        return -2;
+    }
+
+    // must be BLOCKED to unblock
+    if (pcb->execution != BLOCKED)
+    {
+        char invalid_state_err_msg[] = "PCB must be in BLOCKED state to unblock\r\n";
+        sys_req(WRITE, COM1, invalid_state_err_msg, strlen(invalid_state_err_msg));
+        return -3;
+    }
+
+    // remove from blocked queue
+    int result = pcb_remove(pcb);
+    if (result != 0)
+    {
+        char pcb_remove_err_msg[] = "Failed to remove PCB from queue\r\n";
+        sys_req(WRITE, COM1, pcb_remove_err_msg, strlen(pcb_remove_err_msg));
+        return result;
+    }
+
+    // change to READY and insert into ready queue
+    pcb->execution = READY;
+    pcb_insert(pcb);
+    return 0;
+}
+
+int suspend_pcb(const char* name)
+{
+    // check for valid name
+    if (is_valid_name(name) == false)
+    {
+        return -1;
+    }
+
+    // check for PCB existence
+    PCB *pcb = pcb_find(name);
+    if (pcb == NULL)
+    {
+        char pcb_not_found_err_msg[] = "PCB not found\r\n";
+        sys_req(WRITE, COM1, pcb_not_found_err_msg, strlen(pcb_not_found_err_msg));
+        return -2;
+    }
+
+    // must be NOT_SUSPENDED to suspend
+    if (pcb->dispatch != NOT_SUSPENDED)
+    {
+        char invalid_state_err_msg[] = "PCB must be in NOT_SUSPENDED state to suspend\r\n";
+        sys_req(WRITE, COM1, invalid_state_err_msg, strlen(invalid_state_err_msg));
+        return -3;
+    }
+
+    // change to SUSPENDED
+    pcb->dispatch = SUSPENDED;
+    return 0;
+}
+
+int resume_pcb(const char* name)
+{
+    // check for valid name
+    if (is_valid_name(name) == false)
+    {
+        return -1;
+    }
+
+    // check for PCB existence
+    PCB *pcb = pcb_find(name);
+    if (pcb == NULL)
+    {
+        char pcb_not_found_err_msg[] = "PCB not found\r\n";
+        sys_req(WRITE, COM1, pcb_not_found_err_msg, strlen(pcb_not_found_err_msg));
+        return -2;
+    }
+
+    // must be SUSPENDED to resume
+    if (pcb->dispatch != SUSPENDED)
+    {
+        char invalid_state_err_msg[] = "PCB must be in SUSPENDED state to resume\r\n";
+        sys_req(WRITE, COM1, invalid_state_err_msg, strlen(invalid_state_err_msg));
+        return -3;
+    }
+
+    // change to NOT_SUSPENDED
+    pcb->dispatch = NOT_SUSPENDED;
+    return 0;
+}
