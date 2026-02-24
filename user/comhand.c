@@ -37,7 +37,6 @@ void cmd_help(void)
     mpx_write("  pcb show ready - Show all ready processes\r\n");
     mpx_write("  pcb show blocked - Show all blocked processes\r\n");
     mpx_write("  pcb show all - Show all processes\r\n");
-    mpx_write("  pcb show suspended - Show all suspended processes\r\n");
 }
 
 void cmd_version(void)
@@ -500,10 +499,6 @@ void comhand(void)
 				else if (strcmp(target, "all") == 0)
 				{
 					show_all();
-				}
-				else if (strcmp(target, "suspended") == 0)
-				{
-					show_suspended();
 				}
 				else
 				{
