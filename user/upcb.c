@@ -196,134 +196,6 @@ int set_pcb_priority(const char* name, int priority)
     pcb_insert(pcb);
     return 0;
 }
-    
-int show_pcb(const char* name)
-{
-    //display person's name, class, state, suspended status, priority
-    //*Error Checking*
-    if(!is_valid_name(name))
-    //name must be valid
-    {
-        return -1;
-    }
-    
-    PCB* pcb = pcb_find(name);
-    if(pcb == NULL)
-    //name must be found
-    {
-        char lost_pcb_name[] = "Name is not found\r\n";
-        sys_req(WRITE, COM1, lost_pcb_name, strlen(lost_pcb_name));
-        return -2;
-    }
-
-    //Name process
-    char pcb_nm_msg[] = "PCB name: ";
-    sys_req(WRITE, COM1, pcb_nm_msg, strlen(pcb_nm_msg));
-    sys_req(WRITE, COM1, pcb->name, strlen(pcb->name));
-    sys_req(WRITE, COM1, "\r\n", 2);
-    
-    //Class process
-    char class_msg[] = "Class: ";
-    sys_req(WRITE, COM1, class_msg, strlen(class_msg));
-    if(pcb->class == USER)
-    { 
-        char class_usr_msg[] = "USER\r\n";
-        sys_req(WRITE, COM1, class_usr_msg, strlen(class_usr_msg));
-    }
-    if(pcb->class == SYSTEM)
-    { 
-        char class_sys_msg[] = "SYSTEM\r\n";
-        sys_req(WRITE, COM1, class_sys_msg, strlen(class_sys_msg));
-    }
-    //v BOTH OF THESE SAME AS CLASS ^
-    //State process (execution)
-    char state_msg[] = "State: ";
-    sys_req(WRITE, COM1, state_msg, strlen(state_msg));
-    if(pcb->execution == READY)
-    { 
-        char state_rdy_msg[] = "READY\r\n";
-        sys_req(WRITE, COM1, state_rdy_msg, strlen(state_rdy_msg));
-    }
-    if(pcb->execution == RUNNING)
-    { 
-        char state_run_msg[] = "RUNNING\r\n";
-        sys_req(WRITE, COM1, state_run_msg, strlen(state_run_msg));
-    }
-    if(pcb->execution == BLOCKED)
-    { 
-        char state_blk_msg[] = "BLOCKED\r\n";
-        sys_req(WRITE, COM1, state_blk_msg, strlen(state_blk_msg));
-    }
-
-    //Status process (dispatch)
-    char status_msg[] = "Status: ";
-    sys_req(WRITE, COM1, status_msg, strlen(status_msg));
-    if(pcb->dispatch == NOT_SUSPENDED)
-    { 
-        char status_not_msg[] = "NOT_SUSPENDED\r\n";
-        sys_req(WRITE, COM1, status_not_msg, strlen(status_not_msg));
-    }
-    if(pcb->dispatch == SUSPENDED)
-    { 
-        char status_sus_msg[] = "SUSPENDED\r\n";
-        sys_req(WRITE, COM1, status_sus_msg, strlen(status_sus_msg));
-    }
-
-    //Priority process
-    char priority_msg[] = "Priority: ";
-    sys_req(WRITE, COM1, priority_msg, strlen(priority_msg));
-    char priority_value_msg[] = "x\r\n";
-    priority_value_msg[0] = pcb->priority + '0';
-    sys_req(WRITE, COM1, priority_value_msg, strlen(priority_value_msg));
-    return 0;
-}
-
-void show_ready(void)
-{
-    //header message saying this is ready queue
-     char ready_hdr[] = "READY QUEUE\r\n";
-    sys_req(WRITE, COM1, ready_hdr, strlen(ready_hdr));
-    //loop through ready queue, use showpcb() + sys_req(\r\n) on each value, + msg incase queue is empty
-    PCB* pcb = ready_queue->head;
-    if (pcb == NULL)
-    {
-        char ready_err_msg[] = "Ready queue is empty\r\n\r\n";
-        sys_req(WRITE, COM1, ready_err_msg, strlen(ready_err_msg));
-    }
-    while (pcb != NULL)
-    {
-        show_pcb(pcb->name);
-        sys_req(WRITE, COM1, "\r\n", 2);
-        pcb = pcb->next;
-    }
-} 
-
-void show_blocked(void)
-{
-    //header message saying this is blocked queue
-    char blocked_hdr[] = "BLOCKED QUEUE\r\n";
-    sys_req(WRITE, COM1, blocked_hdr, strlen(blocked_hdr));
-    //loop through blocked queue, use showpcb() + sys_req(\r\n) on each value, + msg incase queue is empty
-    PCB* pcb = blocked_queue->head;
-    if (pcb == NULL)
-    {
-        char blocked_err_msg[] = "Blocked queue is empty\r\n\r\n";
-        sys_req(WRITE, COM1, blocked_err_msg, strlen(blocked_err_msg));
-    }
-    while (pcb != NULL)
-    {
-        show_pcb(pcb->name);
-        sys_req(WRITE, COM1, "\r\n", 2);
-        pcb = pcb->next;
-    }
-}
-
-void show_all(void)
-{
-    //both show_ready and show_blocked
-    show_ready();
-    show_blocked();
-}
 
 int block_pcb(const char* name)
 {
@@ -463,4 +335,132 @@ int resume_pcb(const char* name)
     // change to NOT_SUSPENDED
     pcb->dispatch = NOT_SUSPENDED;
     return 0;
+}
+    
+int show_pcb(const char* name)
+{
+    //display person's name, class, state, suspended status, priority
+    //*Error Checking*
+    if(!is_valid_name(name))
+    //name must be valid
+    {
+        return -1;
+    }
+    
+    PCB* pcb = pcb_find(name);
+    if(pcb == NULL)
+    //name must be found
+    {
+        char lost_pcb_name[] = "Name is not found\r\n";
+        sys_req(WRITE, COM1, lost_pcb_name, strlen(lost_pcb_name));
+        return -2;
+    }
+
+    //Name process
+    char pcb_nm_msg[] = "PCB name: ";
+    sys_req(WRITE, COM1, pcb_nm_msg, strlen(pcb_nm_msg));
+    sys_req(WRITE, COM1, pcb->name, strlen(pcb->name));
+    sys_req(WRITE, COM1, "\r\n", 2);
+    
+    //Class process
+    char class_msg[] = "Class: ";
+    sys_req(WRITE, COM1, class_msg, strlen(class_msg));
+    if(pcb->class == USER)
+    { 
+        char class_usr_msg[] = "USER\r\n";
+        sys_req(WRITE, COM1, class_usr_msg, strlen(class_usr_msg));
+    }
+    if(pcb->class == SYSTEM)
+    { 
+        char class_sys_msg[] = "SYSTEM\r\n";
+        sys_req(WRITE, COM1, class_sys_msg, strlen(class_sys_msg));
+    }
+    //v BOTH OF THESE SAME AS CLASS ^
+    //State process (execution)
+    char state_msg[] = "State: ";
+    sys_req(WRITE, COM1, state_msg, strlen(state_msg));
+    if(pcb->execution == READY)
+    { 
+        char state_rdy_msg[] = "READY\r\n";
+        sys_req(WRITE, COM1, state_rdy_msg, strlen(state_rdy_msg));
+    }
+    if(pcb->execution == RUNNING)
+    { 
+        char state_run_msg[] = "RUNNING\r\n";
+        sys_req(WRITE, COM1, state_run_msg, strlen(state_run_msg));
+    }
+    if(pcb->execution == BLOCKED)
+    { 
+        char state_blk_msg[] = "BLOCKED\r\n";
+        sys_req(WRITE, COM1, state_blk_msg, strlen(state_blk_msg));
+    }
+
+    //Status process (dispatch)
+    char status_msg[] = "Status: ";
+    sys_req(WRITE, COM1, status_msg, strlen(status_msg));
+    if(pcb->dispatch == NOT_SUSPENDED)
+    { 
+        char status_not_msg[] = "NOT_SUSPENDED\r\n";
+        sys_req(WRITE, COM1, status_not_msg, strlen(status_not_msg));
+    }
+    if(pcb->dispatch == SUSPENDED)
+    { 
+        char status_sus_msg[] = "SUSPENDED\r\n";
+        sys_req(WRITE, COM1, status_sus_msg, strlen(status_sus_msg));
+    }
+
+    //Priority process
+    char priority_msg[] = "Priority: ";
+    sys_req(WRITE, COM1, priority_msg, strlen(priority_msg));
+    char priority_value_msg[] = "x\r\n";
+    priority_value_msg[0] = pcb->priority + '0';
+    sys_req(WRITE, COM1, priority_value_msg, strlen(priority_value_msg));
+    return 0;
+}
+
+void show_ready(void)
+{
+    //header message saying this is ready queue
+     char ready_hdr[] = "READY QUEUE\r\n";
+    sys_req(WRITE, COM1, ready_hdr, strlen(ready_hdr));
+    //loop through ready queue, use showpcb() + sys_req(\r\n) on each value, + msg incase queue is empty
+    PCB* pcb = ready_queue->head;
+    if (pcb == NULL)
+    {
+        char ready_err_msg[] = "Ready queue is empty\r\n\r\n";
+        sys_req(WRITE, COM1, ready_err_msg, strlen(ready_err_msg));
+    }
+    while (pcb != NULL)
+    {
+        show_pcb(pcb->name);
+        sys_req(WRITE, COM1, "\r\n", 2);
+        pcb = pcb->next;
+    }
+} 
+
+void show_blocked(void)
+{
+    //header message saying this is blocked queue
+    char blocked_hdr[] = "BLOCKED QUEUE\r\n";
+    sys_req(WRITE, COM1, blocked_hdr, strlen(blocked_hdr));
+    //loop through blocked queue, use showpcb() + sys_req(\r\n) on each value, + msg incase queue is empty
+    PCB* pcb = blocked_queue->head;
+    if (pcb == NULL)
+    {
+        char blocked_err_msg[] = "Blocked queue is empty\r\n\r\n";
+        sys_req(WRITE, COM1, blocked_err_msg, strlen(blocked_err_msg));
+    }
+    while (pcb != NULL)
+    {
+        show_pcb(pcb->name);
+        sys_req(WRITE, COM1, "\r\n", 2);
+        pcb = pcb->next;
+    }
+}
+
+void show_all(void)
+{
+    //both show_ready and show_blocked
+    show_ready();
+    show_blocked();
 }
