@@ -38,7 +38,7 @@ int pcb_free(PCB *pcb)
 
 PCB* pcb_setup(const char *name, PCB_class class, int priority)
 {
-    if (strlen(name) != PCB_NAME_LENGTH)
+    if (strlen(name) > PCB_NAME_LENGTH || strlen(name) <= 0)
     {
         return NULL;
     }
@@ -59,8 +59,8 @@ PCB* pcb_setup(const char *name, PCB_class class, int priority)
         return NULL;
     }
 
-    memcpy(pcb->name, name, PCB_NAME_LENGTH);
-    pcb->name[PCB_NAME_LENGTH] = '\0';
+    memcpy(pcb->name, name, strlen(name));
+    pcb->name[strlen(name)] = '\0';
     pcb->class = class;
     pcb->priority = priority;
     pcb->execution = READY;

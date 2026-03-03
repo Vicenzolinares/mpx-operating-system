@@ -34,14 +34,15 @@ int delete_pcb(const char* name);
  @param name The name of the PCB
  @param priority The new priority level (0-9)
  @return 0 on success, -1 for invalid parameters, -2 for PCB not found,
-         non-zero for failing to remove from queue
+         -3 for system process, non-zero for failing to remove from queue
 */
 int set_pcb_priority(const char* name, int priority);
 
 /**
  Blocks a READY PCB, changing its state to BLOCKED
  @param name The name of the PCB to block
- @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 for invalid state
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 for system process,
+         -4 for invalid state
 */
 int block_pcb(const char* name);
 
@@ -55,7 +56,8 @@ int unblock_pcb(const char* name);
 /**
  Suspends a NOT_SUSPENDED PCB, changing its dispatch state to SUSPENDED
  @param name The name of the PCB to suspend
- @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 for invalid state
+ @return 0 on success, -1 for invalid name, -2 for PCB not found, -3 for system process,
+         -4 for invalid state
 */
 int suspend_pcb(const char* name);
 
@@ -73,12 +75,13 @@ int resume_pcb(const char* name);
 */
 int show_pcb(const char* name);
 
-/**formation in the ready queue
+/**
+ Shows all PCB information in the ready queue
 */
 void show_ready(void);
 
 /**
- Shows all PCB information in the blocked queeu
+ Shows all PCB information in the blocked queue
 */
 void show_blocked(void);
 

@@ -26,17 +26,17 @@ void cmd_help(void)
     mpx_write("  version - Shows build/version information\r\n");
     mpx_write("\r\n");
     mpx_write("pcb Process Commands:\r\n");
-    mpx_write("  pcb create <name> <class> <priority> - Create a new process\r\n");
-    mpx_write("  pcb delete <name> - Delete a process\r\n");
-    mpx_write("  pcb block <name> - Block a process\r\n");
-    mpx_write("  pcb unblock <name> - Unblock a process\r\n");
-    mpx_write("  pcb suspend <name> - Suspend a process\r\n");
-    mpx_write("  pcb resume <name> - Resume a process\r\n");
-    mpx_write("  pcb set priority <name> <priority> - Set process priority\r\n");
-    mpx_write("  pcb show <name> - Show process information\r\n");
-    mpx_write("  pcb show ready - Show all ready processes\r\n");
-    mpx_write("  pcb show blocked - Show all blocked processes\r\n");
-    mpx_write("  pcb show all - Show all processes\r\n");
+    mpx_write("  pcb create <name> <class> <priority> - Create a new process | <name> 1-8 characters | <class> user or system | <priority> 0-9\r\n");
+    mpx_write("  pcb delete <name> - Delete a non-system process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb block <name> - Block a non-system process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb unblock <name> - Unblock a process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb suspend <name> - Suspend a non-system process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb resume <name> - Resume a process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb set priority <name> <priority> - Set non-system process priority | <name> 1-8 characters | <priority> 0-9\r\n");
+    mpx_write("  pcb show name <name> - Show process information | <name> 1-8 characters\r\n");
+    mpx_write("  pcb show ready - Show all ready processes' information\r\n");
+    mpx_write("  pcb show blocked - Show all blocked processes' information\r\n");
+    mpx_write("  pcb show all - Show all processes' information\r\n");
 }
 
 void cmd_version(void)
@@ -470,39 +470,66 @@ void comhand(void)
 				}
 			}
 
-			// pcb show <name> | pcb show ready | pcb show blocked | pcb show all | pcb show suspended
+			// pcb show name <name> | pcb show ready | pcb show blocked | pcb show all | pcb show suspended
 			else if (strcmp(parse_string_ptr, "show") == 0)
 			{
-				char *target = strtok(NULL, WHITESPACE_CHARS);
+				char *parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
 
-				if (target == NULL)
+				if (parse_string_ptr == NULL)
 				{
 					mpx_write("Error: 'pcb show' requires a name or queue selector.\r\n");
 					continue;
 				}
 
-				parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-				if (parse_string_ptr != NULL)
+				if (strcmp(parse_string_ptr, "ready") == 0)
 				{
-					mpx_write("Error: 'pcb show' command has too many arguments.\r\n");
-					continue;
-				}
+					parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+					if (parse_string_ptr != NULL)
+					{
+						mpx_write("Error: 'pcb show ready' command takes no arguments.\r\n");
+						continue;
+					}
 
-				if (strcmp(target, "ready") == 0)
-				{
 					show_ready();
 				}
-				else if (strcmp(target, "blocked") == 0)
+				else if (strcmp(parse_string_ptr, "blocked") == 0)
 				{
+					parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+					if (parse_string_ptr != NULL)
+					{
+						mpx_write("Error: 'pcb show blocked' command takes no arguments.\r\n");
+						continue;
+					}
+
 					show_blocked();
 				}
-				else if (strcmp(target, "all") == 0)
+				else if (strcmp(parse_string_ptr, "all") == 0)
 				{
+					parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+					if (parse_string_ptr != NULL)
+					{
+						mpx_write("Error: 'pcb show all' command takes no arguments.\r\n");
+						continue;
+					}
+
 					show_all();
+				}
+				else if (strcmp(parse_string_ptr, "name") == 0)
+				{
+					char *target = strtok(NULL, WHITESPACE_CHARS);
+
+					parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+					if (parse_string_ptr != NULL)
+					{
+						mpx_write("Error: 'pcb show name' command takes 1 argument.\r\n");
+						continue;
+					}
+
+					show_pcb(target);
 				}
 				else
 				{
-					show_pcb(target);
+					mpx_write("Error: Unknown subcommand for 'pcb show'.\r\n");
 				}
 			}
 

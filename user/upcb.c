@@ -7,7 +7,7 @@
 */
 static bool is_valid_name(const char* name)
 {
-    if (strlen(name) != PCB_NAME_LENGTH)
+    if (strlen(name) > PCB_NAME_LENGTH || strlen(name) <= 0)
     {
         char name_err_msg[] = "Invalid name length\r\n";
         sys_req(WRITE, COM1, name_err_msg, strlen(name_err_msg));
@@ -183,6 +183,13 @@ int set_pcb_priority(const char* name, int priority)
         return -2;
     }
 
+    if(is_system_process(pcb))
+    {
+        char cannot_change_sys_err_msg[] = "Cannot change priority of system process\r\n";
+        sys_req(WRITE, COM1, cannot_change_sys_err_msg, strlen(cannot_change_sys_err_msg));
+        return -3;
+    }
+
     // remove from queue
     int remove = pcb_remove(pcb);
     if (remove != 0)
@@ -214,12 +221,19 @@ int block_pcb(const char* name)
         return -2;
     }
 
+    if(is_system_process(pcb))
+    {
+        char cannot_block_sys_err_msg[] = "Cannot block system process\r\n";
+        sys_req(WRITE, COM1, cannot_block_sys_err_msg, strlen(cannot_block_sys_err_msg));
+        return -3;
+    }
+
     // must be READY to block
     if (pcb->execution != READY)
     {
         char invalid_state_err_msg[] = "PCB needs to be in READY state to block\r\n";
         sys_req(WRITE, COM1, invalid_state_err_msg, strlen(invalid_state_err_msg));
-        return -3;
+        return -4;
     }
 
     // remove from ready queue
@@ -294,12 +308,19 @@ int suspend_pcb(const char* name)
         return -2;
     }
 
+    if(is_system_process(pcb))
+    {
+        char cannot_suspend_sys_err_msg[] = "Cannot suspend system process\r\n";
+        sys_req(WRITE, COM1, cannot_suspend_sys_err_msg, strlen(cannot_suspend_sys_err_msg));
+        return -3;
+    }
+
     // must be NOT_SUSPENDED to suspend
     if (pcb->dispatch != NOT_SUSPENDED)
     {
         char invalid_state_err_msg[] = "PCB must be in NOT_SUSPENDED state to suspend\r\n";
         sys_req(WRITE, COM1, invalid_state_err_msg, strlen(invalid_state_err_msg));
-        return -3;
+        return -4;
     }
 
     // change to SUSPENDED
