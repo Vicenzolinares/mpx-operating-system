@@ -10,9 +10,8 @@
  @file sys_call.h
  @brief System call interface definitions
 */
-
 struct context {
-    // last regester to get pushed
+    // last register to get pushed
     int32_t esp;
 
     // segment registers
@@ -37,6 +36,11 @@ struct context {
     int32_t eip;
 };
 
+/**
+ Swaps the current process during an isr
+ @param cont The context of the process that is being swapped out
+ @return The context of the process that is being swapped in
+*/
 struct context *sys_call(struct context *cont);
 
 #endif
