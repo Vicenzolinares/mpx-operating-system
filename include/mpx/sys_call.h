@@ -12,7 +12,7 @@
 */
 struct context {
     // last register to get pushed
-    int32_t esp;
+    struct context* esp;
 
     // segment registers
     int16_t ds;
@@ -33,7 +33,7 @@ struct context {
     // cpu pushes these automatically
     int32_t eflags;
     int16_t cs;
-    int32_t eip;
+    void (*eip)(void);
 };
 
 /**

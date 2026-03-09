@@ -9,10 +9,14 @@ user/comhand.o: user/comhand.c include/comhand.h include/sys_req.h \
 user/urtc.o: user/urtc.c include/mpx/krtc.h include/sys_req.h \
   include/string.h
 
-user/upcb.o: user/upcb.c include/mpx/kpcb.h
+user/upcb.o: user/upcb.c include/mpx/kpcb.h 
+
+user/loadr3.o: user/loadr3.c include/upcb.h include/mpx/sys_call.h \
+  include/mpx/kpcb.h include/string.h include/processes.h
 
 USER_OBJECTS=\
 	user/core.o\
   user/urtc.o\
   user/comhand.o\
-  user/upcb.o
+  user/upcb.o\
+  user/loadr3.o
