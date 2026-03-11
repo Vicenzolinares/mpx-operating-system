@@ -7,17 +7,21 @@
 #include <string.h>
 #include <processes.h>
 
+/**
+ Loads all R3 processes from <processes.h>
+*/
 void load_R3(void);
-    // loads the R3 test processes from <processes.h>
   
-
+/**
+ Loads all R3 processes and sets their statuses to READY SUSPENDED
+*/
 void load_R3_suspended(void);
-    // loads all R3 processes but sets the status to ready suspended
 
+/**
+ Loads a single process, gives them one of the names proc1 -> proc5, loads them as a READY NON-SUSPENDED process
+ @param name The name of the R3 process
+ @param dispatch The dispatching state of the R3 process
+*/  
 void load_process(const char* name, dispatching_state dispatch);
-    // loads a single process giving one of the process names proc1 -> proc5
-    // the process will be loaded as a ready non-suspended process
-
-
-
+  
 #endif

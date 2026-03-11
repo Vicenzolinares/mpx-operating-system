@@ -14,7 +14,6 @@ void load_R3(void)
     load_process("proc5", NOT_SUSPENDED);
 }
     
-
 void load_R3_suspended(void)
 {
     // loads all R3 processes but sets the status to ready suspended
