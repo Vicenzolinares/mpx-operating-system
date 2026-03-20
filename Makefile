@@ -14,7 +14,7 @@ AS	= nasm
 ASFLAGS = -f elf -g
 
 CC	= clang
-CFLAGS  = @make/CFLAGS -mgeneral-regs-only
+CFLAGS  = @make/CFLAGS
 
 ifeq ($(shell uname), Darwin)
 LD	= i686-elf-ld

@@ -11,7 +11,7 @@ fi
 
 termsettings=$(stty -g)
 qemu-system-i386 -nographic -kernel kernel.bin -s "$@"
-stty "${termse ttings}"
+stty "${termsettings}"
 tput -S <<-EOF
 	sgr0
 	smam
