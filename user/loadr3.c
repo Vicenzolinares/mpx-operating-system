@@ -1,8 +1,5 @@
 #include <loadr3.h>
-/**
-take the pcb stack pointer, subtract sizeof context, 
- then set the values of the context at stack pointer
-*/ 
+#include <mpx/kpcb.h>
 
 void load_R3(void)
 {
@@ -27,7 +24,11 @@ void load_R3_suspended(void)
 void load_process(const char* name, dispatching_state dispatch)
 {
     //error message check
-    if (strcmp(name, "proc1") > 0 || strcmp(name, "proc1") < -4)
+    if (strcmp(name, "proc1") != 0 
+        && strcmp(name, "proc2") != 0
+        && strcmp(name, "proc3") != 0
+        && strcmp(name, "proc4") != 0
+        && strcmp(name, "proc5") != 0)
     {
         char strcmp_err_msg[] = "Name invalid";
         sys_req(WRITE, COM1, strcmp_err_msg, strlen(strcmp_err_msg));
@@ -79,3 +80,17 @@ void load_process(const char* name, dispatching_state dispatch)
     context->esi = 0;
     context->edi = 0;
 }   
+
+void resume_all(void)
+{
+    // resumes all ready suspended processes
+    PCB* pcb = ready_queue->head;
+    while (pcb != NULL)
+    {
+        if (pcb->dispatch == SUSPENDED)
+        {
+            pcb->dispatch = NOT_SUSPENDED;
+        }
+        pcb = pcb->next;
+     }
+}

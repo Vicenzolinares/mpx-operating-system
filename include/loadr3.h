@@ -23,5 +23,10 @@ void load_R3_suspended(void);
  @param dispatch The dispatching state of the R3 process
 */  
 void load_process(const char* name, dispatching_state dispatch);
+
+/**
+ Resumes all suspended processes in the ready queue
+*/
+void resume_all(void);
   
 #endif

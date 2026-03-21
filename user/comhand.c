@@ -1,27 +1,6 @@
 #include <comhand.h>
 #include <upcb.h>
-
-#if defined(__GNUC__)
-#define WEAK_SYMBOL __attribute__((weak))
-#else
-#define WEAK_SYMBOL
-#endif
-
-int loadr3(void) WEAK_SYMBOL;
-int loadr3suspended(void) WEAK_SYMBOL;
-int loadprocess(const char *name) WEAK_SYMBOL;
-int resume_all(void) WEAK_SYMBOL;
-
-static int is_valid_r3_process_name(const char *name)
-{
-	return name != NULL
-		&& (strcmp(name, "proc1") == 0
-			|| strcmp(name, "proc2") == 0
-			|| strcmp(name, "proc3") == 0
-			|| strcmp(name, "proc4") == 0
-			|| strcmp(name, "proc5") == 0);
-}
-
+#include <loadr3.h>
 
 /**
  Helper function to write a string to COM1
@@ -37,42 +16,33 @@ static void mpx_write(const char *s)
 
 void cmd_help(void)
 {
-    mpx_write("Commands:\r\n");
+	mpx_write("Commands:\r\n");
     mpx_write("  date get - Displays the current system date\r\n");
     mpx_write("  date set <month> <day> <year> - Sets the system date mm dd yy\r\n");
     mpx_write("  help - Shows this list of available commands\r\n");
-	mpx_write("  loadprocess <proc1|proc2|proc3|proc4|proc5> - Load one R3 process\r\n");
-	mpx_write("      usage: loadprocess proc1\r\n");
-	mpx_write("  loadr3 - Load all R3 processes as ready, non-suspended\r\n");
-	mpx_write("      usage: loadr3\r\n");
-	mpx_write("  loadr3suspended - Load all R3 processes as ready suspended\r\n");
-	mpx_write("      usage: loadr3suspended\r\n");
-	mpx_write("  resume all - Resume all ready suspended processes\r\n");
-	mpx_write("      usage: resume all\r\n");
     mpx_write("  shutdown - Shuts down the system and prompts for the confirmation\r\n");
     mpx_write("  time get - Displays the current system time [in UTC time]\r\n");
     mpx_write("  time set <hour> <minute> <second> - Sets the system time hh mm ss [in UTC time]\r\n");
     mpx_write("  version - Shows build/version information\r\n");
-	mpx_write("  yield - Yield the CPU to the scheduler\r\n");
-	mpx_write("      usage: yield\r\n");
+	mpx_write("  yield - Yield the CPU from command handler to the other processes\r\n");
     mpx_write("\r\n");
     mpx_write("pcb Process Commands:\r\n");
-	mpx_write("  pcb create <name> <class> <priority> - Disabled in R3\r\n");
-	mpx_write("  pcb delete <name> - Delete a process\r\n");
-	mpx_write("      usage: pcb delete alpha\r\n");
-	mpx_write("  pcb block <name> - Block a user process (system processes are protected)\r\n");
-	mpx_write("      usage: pcb block alpha\r\n");
-    mpx_write("  pcb unblock <name> - Unblock a process\r\n");
-	mpx_write("  pcb suspend <name> - Suspend a user process (system processes are protected)\r\n");
-	mpx_write("      usage: pcb suspend alpha\r\n");
-    mpx_write("  pcb resume <name> - Resume a process\r\n");
-	mpx_write("  pcb set priority <name> <priority> - Set user process priority (0-9)\r\n");
-	mpx_write("      usage: pcb set priority alpha 4\r\n");
-	mpx_write("  NOTE: <name> max length is 8 characters.\r\n");
-    mpx_write("  pcb show <name> - Show process information\r\n");
-    mpx_write("  pcb show ready - Show all ready processes\r\n");
-    mpx_write("  pcb show blocked - Show all blocked processes\r\n");
-    mpx_write("  pcb show all - Show all processes\r\n");
+    mpx_write("  pcb delete <name> - Delete a non-system process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb block <name> - Block a non-system process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb unblock <name> - Unblock a process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb suspend <name> - Suspend a non-system process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb resume <name> - Resume a process | <name> 1-8 characters\r\n");
+    mpx_write("  pcb set priority <name> <priority> - Set non-system process priority | <name> 1-8 characters | <priority> 0-9\r\n");
+    mpx_write("  pcb show name <name> - Show process information | <name> 1-8 characters\r\n");
+    mpx_write("  pcb show ready - Show all ready processes' information\r\n");
+    mpx_write("  pcb show blocked - Show all blocked processes' information\r\n");
+    mpx_write("  pcb show all - Show all processes' information\r\n");
+	mpx_write("\r\n");
+	mpx_write("R3 Process Commands:\r\n");
+	mpx_write("  loadprocess <proc1|proc2|proc3|proc4|proc5> - Load one R3 process from proc1 to proc5\r\n");
+	mpx_write("  loadr3 - Load all R3 processes as ready, non-suspended\r\n");
+	mpx_write("  loadr3suspended - Load all R3 processes as ready, suspended\r\n");
+	mpx_write("  resume all - Resume all ready, suspended processes\r\n");
 }
 
 void cmd_version(void)
@@ -321,13 +291,7 @@ void comhand(void)
 				continue;
 			}
 
-			if (!loadr3)
-			{
-				mpx_write("Error: 'loadr3' backend is not available.\r\n");
-				continue;
-			}
-
-			loadr3();
+			load_R3();
 		}
 
 		// loadr3suspended command
@@ -340,13 +304,7 @@ void comhand(void)
 				continue;
 			}
 
-			if (!loadr3suspended)
-			{
-				mpx_write("Error: 'loadr3suspended' backend is not available.\r\n");
-				continue;
-			}
-
-			loadr3suspended();
+			load_R3_suspended();
 		}
 
 		// loadprocess <proc1..proc5>
@@ -367,19 +325,7 @@ void comhand(void)
 				continue;
 			}
 
-			if (!is_valid_r3_process_name(name))
-			{
-				mpx_write("Error: 'loadprocess' only accepts proc1 through proc5.\r\n");
-				continue;
-			}
-
-			if (!loadprocess)
-			{
-				mpx_write("Error: 'loadprocess' backend is not available.\r\n");
-				continue;
-			}
-
-			loadprocess(name);
+			load_process(name, NOT_SUSPENDED);
 		}
 
 		// resume all
@@ -400,41 +346,9 @@ void comhand(void)
 				continue;
 			}
 
-			if (!resume_all)
-			{
-				mpx_write("Error: 'resume all' backend is not available.\r\n");
-				continue;
-			}
-
 			resume_all();
 		}
 
-		// createpcb disabled in R3
-		else if (strcmp(parse_string_ptr, "createpcb") == 0)
-		{
-			mpx_write("Error: 'createpcb' is disabled in R3.\r\n");
-		}
-
-		// create pcb disabled in R3
-		else if (strcmp(parse_string_ptr, "create") == 0)
-		{
-			char *target = strtok(NULL, WHITESPACE_CHARS);
-
-			if (target != NULL && strcmp(target, "pcb") == 0)
-			{
-				parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-				if (parse_string_ptr != NULL)
-				{
-					mpx_write("Error: 'create pcb' is disabled in R3.\r\n");
-					continue;
-				}
-				mpx_write("Error: 'create pcb' is disabled in R3.\r\n");
-			}
-			else
-			{
-				mpx_write("Unknown command.\r\n");
-			}
-		}
 		// pcb command
 		else if (strcmp(parse_string_ptr, "pcb") == 0)
 		{
@@ -443,12 +357,6 @@ void comhand(void)
 			{
 				mpx_write("Error: Missing pcb subcommand.\r\n");
 				continue;
-			}
-
-			// pcb create <name> <class> <priority>
-			if (strcmp(parse_string_ptr, "create") == 0)
-			{
-				mpx_write("Error: 'pcb create' is disabled in R3.\r\n");
 			}
 
 			// pcb delete <name>
