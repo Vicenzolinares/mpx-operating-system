@@ -67,8 +67,7 @@ sys_call_isr:
 	mov fs, ax
 	mov ax, [ebx + 14]
 	mov gs, ax
-	mov ax, [ebx + 16]
-	mov ss, ax
+	
 
 	mov eax, [ebx + 20]
 	mov ecx, [ebx + 28]
