@@ -19,9 +19,12 @@ struct context *sys_call(struct context *cont) {
                 pcb_remove(new_proc);
                 new_proc->execution = RUNNING;
 
-                current_process->execution = READY;
-                current_process->stack_pointer = (unsigned char *) cont;
-                pcb_insert(current_process);
+                if (current_process != NULL)
+                {
+                    current_process->execution = READY;
+                    current_process->stack_pointer = (unsigned char *) cont;
+                    pcb_insert(current_process);
+                }
 
                 current_process = new_proc;
                 ((struct context *)current_process->stack_pointer)->eax = 0;
@@ -36,7 +39,10 @@ struct context *sys_call(struct context *cont) {
     }
     else if (cont->eax == EXIT)
     {
-        pcb_free(current_process);
+        if (current_process != NULL)
+        {
+            pcb_free(current_process);
+        }
 
         PCB *new_proc = ready_queue->head;
         while (new_proc != NULL)
