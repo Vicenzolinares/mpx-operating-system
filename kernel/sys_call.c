@@ -31,8 +31,8 @@ struct context *sys_call(struct context *cont) {
             new_proc = new_proc->next;
         }
 
-        ((struct context *)current_process->stack_pointer)->eax = 0;
-        return (struct context *)current_process->stack_pointer;
+        cont->eax = 0;
+        return cont;
     }
     else if (cont->eax == EXIT)
     {
@@ -59,7 +59,7 @@ struct context *sys_call(struct context *cont) {
     }
     else
     {
-        ((struct context *)current_process->stack_pointer)->eax = -1;
-        return (struct context *)current_process->stack_pointer;
+        cont->eax = -1;
+        return cont;
     }
 }
