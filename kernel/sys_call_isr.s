@@ -4,38 +4,38 @@ global sys_call_isr
 extern sys_call
 
 sys_call_isr:
-	push dword ebp
-	push dword edi
-	push dword esi
-	push dword edx
-	push dword ecx
-	push dword ebx
-	push dword eax
+	push ebp
+	push edi
+	push esi
+	push edx
+	push ecx
+	push ebx
+	push eax
 
-	push dword ss
-	push dword gs
-	push dword fs
-	push dword es
-	push dword ds
+	push ss
+	push gs
+	push fs
+	push es
+	push ds
 
-	push dword esp
+	push esp
 	
 	call sys_call
 
-	mov dword esp, dword eax
+	mov esp, eax
 	
-	pop dword ds
-	pop dword es
-	pop dword fs
-	pop dword gs
-	pop dword ss
+	pop ds
+	pop es
+	pop fs
+	pop gs
+	pop ss
 
-	pop dword eax
-	pop dword ebx
-	pop dword ecx
-	pop dword edx
-	pop dword esi
-	pop dword edi
-	pop dword ebp
+	pop eax
+	pop ebx
+	pop ecx
+	pop edx
+	pop esi
+	pop edi
+	pop ebp
 
 	iret
