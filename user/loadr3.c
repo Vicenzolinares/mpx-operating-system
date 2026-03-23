@@ -1,5 +1,4 @@
 #include <loadr3.h>
-#include <mpx/kpcb.h>
 
 void load_R3(void)
 {
@@ -51,26 +50,25 @@ void load_process(const char* name, dispatching_state dispatch)
     context->gs = 0x10;
     context->ss = 0x10;
     context->ebp = pcb->stack[PCB_STACK_SIZE - 1];
-    context->esp = context;
     if (strcmp(name, "proc1") == 0)
     {
-        context->eip = proc1;
+        context->eip = (intptr_t)proc1;
     }
     else if (strcmp(name, "proc2") == 0)
     {
-        context->eip = proc2;
+        context->eip = (intptr_t)proc2;
     }
     else if (strcmp(name, "proc3") == 0)
     {
-        context->eip = proc3;
+        context->eip = (intptr_t)proc3;
     }
     else if (strcmp(name, "proc4") == 0)
     {
-        context->eip = proc4;
+        context->eip = (intptr_t)proc4;
     }
     else
     {
-        context->eip = proc5;
+        context->eip = (intptr_t)proc5;
     }
     context->eflags = 0x0202;
     context->eax = 0;

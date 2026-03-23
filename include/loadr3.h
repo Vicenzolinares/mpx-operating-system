@@ -6,6 +6,7 @@
 #include <mpx/kpcb.h>
 #include <string.h>
 #include <processes.h>
+#include <stdint.h>
 
 /**
  Loads all R3 processes from <processes.h>

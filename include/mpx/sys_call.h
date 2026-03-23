@@ -11,29 +11,26 @@
  @brief System call interface definitions
 */
 struct context {
-    // last register to get pushed
-    struct context* esp;
-
     // segment registers
-    int16_t ds;
-    int16_t es;
-    int16_t fs;
-    int16_t gs;
-    int16_t ss;
+    int ds;
+    int es;
+    int fs;
+    int gs;
+    int ss;
 
     // general purpose registers
-    int32_t eax;
-    int32_t ebx;
-    int32_t ecx;
-    int32_t edx;
-    int32_t esi;
-    int32_t edi;
-    int32_t ebp;
+    int eax;
+    int ebx;
+    int ecx;
+    int edx;
+    int esi;
+    int edi;
+    int ebp;
 
     // cpu pushes these automatically
-    int32_t eflags;
-    int16_t cs;
-    void (*eip)(void);
+    int eflags;
+    int cs;
+    int eip;
 };
 
 /**
