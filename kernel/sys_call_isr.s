@@ -1,26 +1,41 @@
 bits 32
 global sys_call_isr
+
 extern sys_call
 
 sys_call_isr:
-    pusha
+	push dword ebp
+	push dword edi
+	push dword esi
+	push dword edx
+	push dword ecx
+	push dword ebx
+	push dword eax
 
-    push ds
-    push es
-    push fs
-    push gs
+	push dword ss
+	push dword gs
+	push dword fs
+	push dword es
+	push dword ds
 
-    push esp
-    call sys_call
-    add esp, 4
+	push dword esp
+	
+	call sys_call
 
-    mov esp, eax
+	mov dword esp, dword eax
+	
+	pop dword ds
+	pop dword es
+	pop dword fs
+	pop dword gs
+	pop dword ss
 
-    pop gs
-    pop fs
-    pop es
-    pop ds
+	pop dword eax
+	pop dword ebx
+	pop dword ecx
+	pop dword edx
+	pop dword esi
+	pop dword edi
+	pop dword ebp
 
-    popa
-
-    iretd
+	iret
