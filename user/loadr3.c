@@ -49,10 +49,10 @@ void load_process(const char* name, dispatching_state dispatch)
     context->fs = 0x10;
     context->gs = 0x10;
     context->ss = 0x10;
-    context->ebp = pcb->stack[PCB_STACK_SIZE - 1];
+    context->ebp = (int)pcb->stack;
     if (strcmp(name, "proc1") == 0)
     {
-        context->eip = (intptr_t)proc1;
+        context->eip = (int)proc1;
     }
     else if (strcmp(name, "proc2") == 0)
     {

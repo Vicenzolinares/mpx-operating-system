@@ -4,13 +4,15 @@ PCB *current_process = NULL;
 static struct context *first_context = NULL;
 
 struct context *sys_call(struct context *cont) {
-    if (first_context == NULL)
-    {
-        first_context = cont;
-    }
+   
 
     if (cont->eax == IDLE)
     {
+         if (first_context == NULL)
+        {
+            first_context = cont;
+        }
+
         PCB *new_proc = ready_queue->head;
         while (new_proc != NULL)
         {
@@ -34,8 +36,8 @@ struct context *sys_call(struct context *cont) {
             new_proc = new_proc->next;
         }
 
-        ((struct context *)current_process->stack_pointer)->eax = 0;
-        return (struct context *)current_process->stack_pointer;
+        cont->eax = 0;
+        return cont;
     }
     else if (cont->eax == EXIT)
     {

@@ -28,9 +28,9 @@ struct context {
     int ebp;
 
     // cpu pushes these automatically
-    int eflags;
-    int cs;
     int eip;
+    int cs; 
+    int eflags;
 };
 
 /**
