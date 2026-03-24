@@ -6,6 +6,9 @@
 #include <mpx/device.h>
 #include <urtc.h>
 #include <stdlib.h>
+#include <upcb.h>
+#include <loadr3.h>
+#include <alarm.h>
 
 /**
  @file comhand.h
