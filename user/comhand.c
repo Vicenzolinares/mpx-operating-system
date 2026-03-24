@@ -259,7 +259,21 @@ void comhand(void)
 			if (parse_string_ptr != NULL && (strcmp(parse_string_ptr, "Y") == 0 || strcmp(parse_string_ptr, "y") == 0))
 			{
 				mpx_write("Shutting down...\r\n");
-				pcb_remove(pcb_find("idle"));
+				// remove all processes before shutdown
+				PCB *cur = ready_queue->head;
+				while (cur != NULL)
+				{
+					pcb_remove(cur);
+					pcb_free(cur);
+					cur = cur->next;
+				}
+				cur = blocked_queue->head;
+				while (cur != NULL)
+				{
+					pcb_remove(cur);
+					pcb_free(cur);
+					cur = cur->next;
+				}
 				sys_req(EXIT);
 			}
 			else
