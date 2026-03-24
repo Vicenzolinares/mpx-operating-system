@@ -14,6 +14,8 @@ typedef struct alarm_request {
 
 static alarm_request alarm_requests[ALARM_PROCESS_LIMIT] = { 0 };
 
+static void mpx_write(const char *s);
+
 static int is_whitespace_char(char c)
 {
 	return c == ' ' || c == '\r' || c == '\n' || c == '\t';
