@@ -2,6 +2,267 @@
 #include <upcb.h>
 #include <loadr3.h>
 
+#define ALARM_PROCESS_LIMIT 10
+
+typedef struct alarm_request {
+	bool active;
+	int hours;
+	int minutes;
+	int seconds;
+	char message[BUFFER_SIZE];
+} alarm_request;
+
+static alarm_request alarm_requests[ALARM_PROCESS_LIMIT] = { 0 };
+
+static int is_whitespace_char(char c)
+{
+	return c == ' ' || c == '\r' || c == '\n' || c == '\t';
+}
+
+static int parse_alarm_time(const char *token, int *hours, int *minutes, int *seconds)
+{
+	int values[3] = { 0 };
+	const char *ptr = token;
+
+	if (token == NULL)
+	{
+		return 0;
+	}
+
+	for (int index = 0; index < 3; index++)
+	{
+		int digits = 0;
+		int value = 0;
+
+		while (*ptr >= '0' && *ptr <= '9')
+		{
+			value = (value * 10) + (*ptr - '0');
+			ptr++;
+			digits++;
+
+			if (digits > 2)
+			{
+				return 0;
+			}
+		}
+
+		if (digits == 0)
+		{
+			return 0;
+		}
+
+		values[index] = value;
+
+		if (index < 2)
+		{
+			if (*ptr != ':')
+			{
+				return 0;
+			}
+
+			ptr++;
+		}
+	}
+
+	if (*ptr != '\0')
+	{
+		return 0;
+	}
+
+	if (values[0] < 0 || values[0] > 23 || values[1] < 0 || values[1] > 59 || values[2] < 0 || values[2] > 59)
+	{
+		return 0;
+	}
+
+	*hours = values[0];
+	*minutes = values[1];
+	*seconds = values[2];
+	return 1;
+}
+
+static char *get_alarm_message(char *input)
+{
+	char *ptr = input;
+	char *end;
+
+	while (is_whitespace_char(*ptr))
+	{
+		ptr++;
+	}
+
+	while (*ptr != '\0' && !is_whitespace_char(*ptr))
+	{
+		ptr++;
+	}
+
+	while (is_whitespace_char(*ptr))
+	{
+		ptr++;
+	}
+
+	while (*ptr != '\0' && !is_whitespace_char(*ptr))
+	{
+		ptr++;
+	}
+
+	while (is_whitespace_char(*ptr))
+	{
+		ptr++;
+	}
+
+	if (*ptr == '\0')
+	{
+		return NULL;
+	}
+
+	end = ptr + strlen(ptr);
+	while (end > ptr && is_whitespace_char(*(end - 1)))
+	{
+		end--;
+	}
+
+	*end = '\0';
+	return ptr;
+}
+
+static void build_alarm_name(int slot, char *name)
+{
+	name[0] = 'a';
+	name[1] = 'l';
+	name[2] = 'a';
+	name[3] = 'r';
+	name[4] = 'm';
+	name[5] = (char)('0' + slot);
+	name[6] = '\0';
+}
+
+static void initialize_process_context(PCB *pcb, void (*entry)(void))
+{
+	struct context *context;
+
+	pcb->stack_pointer = pcb->stack_pointer - sizeof(struct context);
+	context = (struct context *) pcb->stack_pointer;
+	context->cs = 0x08;
+	context->ds = 0x10;
+	context->es = 0x10;
+	context->fs = 0x10;
+	context->gs = 0x10;
+	context->ss = 0x10;
+	context->ebp = (int) pcb->stack;
+	context->eip = (intptr_t) entry;
+	context->eflags = 0x0202;
+	context->eax = 0;
+	context->ebx = 0;
+	context->ecx = 0;
+	context->edx = 0;
+	context->esi = 0;
+	context->edi = 0;
+}
+
+static int time_to_seconds(int hours, int minutes, int seconds)
+{
+	return (hours * 3600) + (minutes * 60) + seconds;
+}
+
+static void run_alarm_process(int slot)
+{
+	alarm_request *alarm = &alarm_requests[slot];
+	int target_seconds = time_to_seconds(alarm->hours, alarm->minutes, alarm->seconds);
+	int current_seconds = time_to_seconds(get_hours(), get_minutes(), get_seconds());
+
+	while (current_seconds < target_seconds)
+	{
+		sys_req(IDLE);
+		current_seconds = time_to_seconds(get_hours(), get_minutes(), get_seconds());
+	}
+
+	mpx_write("Alarm: ");
+	mpx_write(alarm->message);
+	mpx_write("\r\n");
+	alarm->active = false;
+	sys_req(EXIT);
+
+	for (;;)
+	{
+		sys_req(EXIT);
+	}
+}
+
+#define DEFINE_ALARM_PROCESS(slot) \
+	static void alarm_process_##slot(void) \
+	{ \
+		run_alarm_process(slot); \
+	}
+
+DEFINE_ALARM_PROCESS(0)
+DEFINE_ALARM_PROCESS(1)
+DEFINE_ALARM_PROCESS(2)
+DEFINE_ALARM_PROCESS(3)
+DEFINE_ALARM_PROCESS(4)
+DEFINE_ALARM_PROCESS(5)
+DEFINE_ALARM_PROCESS(6)
+DEFINE_ALARM_PROCESS(7)
+DEFINE_ALARM_PROCESS(8)
+DEFINE_ALARM_PROCESS(9)
+
+static void (*const alarm_process_entries[ALARM_PROCESS_LIMIT])(void) = {
+	alarm_process_0,
+	alarm_process_1,
+	alarm_process_2,
+	alarm_process_3,
+	alarm_process_4,
+	alarm_process_5,
+	alarm_process_6,
+	alarm_process_7,
+	alarm_process_8,
+	alarm_process_9,
+};
+
+static int create_alarm_process(int hours, int minutes, int seconds, const char *message)
+{
+	char name[PCB_NAME_LENGTH + 1];
+	int slot;
+	PCB *pcb;
+
+	for (slot = 0; slot < ALARM_PROCESS_LIMIT; slot++)
+	{
+		if (!alarm_requests[slot].active)
+		{
+			break;
+		}
+	}
+
+	if (slot == ALARM_PROCESS_LIMIT)
+	{
+		mpx_write("Error: No alarm slots available.\r\n");
+		return -1;
+	}
+
+	alarm_requests[slot].active = true;
+	alarm_requests[slot].hours = hours;
+	alarm_requests[slot].minutes = minutes;
+	alarm_requests[slot].seconds = seconds;
+	memcpy(alarm_requests[slot].message, message, strlen(message) + 1);
+
+	build_alarm_name(slot, name);
+	if (create_pcb(name, USER, 5) != 0)
+	{
+		alarm_requests[slot].active = false;
+		return -1;
+	}
+
+	pcb = pcb_find(name);
+	if (pcb == NULL)
+	{
+		alarm_requests[slot].active = false;
+		mpx_write("Failed to create PCB\r\n");
+		return -1;
+	}
+
+	initialize_process_context(pcb, alarm_process_entries[slot]);
+	return 0;
+}
+
 /**
  Helper function to write a string to COM1
  @param s The string to write
@@ -19,12 +280,12 @@ void cmd_help(void)
 	mpx_write("Commands:\r\n");
     mpx_write("  date get - Displays the current system date\r\n");
     mpx_write("  date set <month> <day> <year> - Sets the system date mm dd yy\r\n");
+	mpx_write("  alarm <hh:mm:ss> <message> - Creates an alarm process\r\n");
     mpx_write("  help - Shows this list of available commands\r\n");
     mpx_write("  shutdown - Shuts down the system and prompts for the confirmation\r\n");
     mpx_write("  time get - Displays the current system time [in UTC time]\r\n");
     mpx_write("  time set <hour> <minute> <second> - Sets the system time hh mm ss [in UTC time]\r\n");
     mpx_write("  version - Shows build/version information\r\n");
-	mpx_write("  yield - Yield the CPU from command handler to the other processes\r\n");
     mpx_write("\r\n");
     mpx_write("pcb Process Commands:\r\n");
     mpx_write("  pcb delete <name> - Delete a non-system process | <name> 1-8 characters\r\n");
@@ -47,7 +308,7 @@ void cmd_help(void)
 
 void cmd_version(void)
 {
-	mpx_write("MPX R3\r\n");
+	mpx_write("MPX R4\r\n");
 	mpx_write("Build: ");
 	mpx_write(__DATE__);
 	mpx_write(" ");
@@ -59,9 +320,12 @@ void comhand(void)
 {
 	for (;;)
 	{
+		sys_req(IDLE);
 		mpx_write("mpx> ");
 		char buf[BUFFER_SIZE] = { 0 };
+		char raw_buf[BUFFER_SIZE] = { 0 };
 		sys_req(READ, COM1, buf, BUFFER_SIZE);
+		memcpy(raw_buf, buf, BUFFER_SIZE);
 
 		char *parse_string_ptr = strtok(buf, WHITESPACE_CHARS);
 
@@ -260,7 +524,12 @@ void comhand(void)
 			if (parse_string_ptr != NULL && (strcmp(parse_string_ptr, "Y") == 0 || strcmp(parse_string_ptr, "y") == 0))
 			{
 				mpx_write("Shutting down...\r\n");
-				return;
+				sys_req(EXIT);
+
+				for (;;)
+				{
+					sys_req(EXIT);
+				}
 			}
 			else
 			{
@@ -268,17 +537,39 @@ void comhand(void)
 			}
 		}
 
-		// yield command
-		else if (strcmp(parse_string_ptr, "yield") == 0)
+		// alarm command
+		else if (strcmp(parse_string_ptr, "alarm") == 0)
 		{
-			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-			if (parse_string_ptr != NULL)
+			char *time_token;
+			char *message;
+			int hours;
+			int minutes;
+			int seconds;
+
+			time_token = strtok(NULL, WHITESPACE_CHARS);
+			if (time_token == NULL)
 			{
-				mpx_write("Error: 'yield' command takes no arguments.\r\n");
+				mpx_write("Error: 'alarm' command requires a time and message.\r\n");
 				continue;
 			}
 
-			sys_req(IDLE);
+			message = get_alarm_message(raw_buf);
+			if (message == NULL)
+			{
+				mpx_write("Error: 'alarm' command requires a time and message.\r\n");
+				continue;
+			}
+
+			if (!parse_alarm_time(time_token, &hours, &minutes, &seconds))
+			{
+				mpx_write("Error: Invalid alarm time. Use hh:mm:ss.\r\n");
+				continue;
+			}
+
+			if (create_alarm_process(hours, minutes, seconds, message) == 0)
+			{
+				mpx_write("Alarm created.\r\n");
+			}
 		}
 
 		// loadr3 command
