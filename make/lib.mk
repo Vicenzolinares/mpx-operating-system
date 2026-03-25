@@ -9,8 +9,11 @@ lib/core.o: lib/core.c include/mpx/serial.h include/mpx/device.h \
 
 lib/ctype.o: lib/ctype.c include/ctype.h
 
+lib/lib_mem.0: lib/lib_mem.c include/mpx/vm.h
+
 LIB_OBJECTS=\
 	lib/string.o\
 	lib/stdlib.o\
 	lib/core.o\
-	lib/ctype.o
+	lib/ctype.o\
+	lib/lib_mem.o
