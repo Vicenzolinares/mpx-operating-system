@@ -265,14 +265,14 @@ void comhand(void)
 				{
 					pcb_remove(cur);
 					pcb_free(cur);
-					cur = cur->next;
+					cur = ready_queue->head;
 				}
 				cur = blocked_queue->head;
 				while (cur != NULL)
 				{
 					pcb_remove(cur);
 					pcb_free(cur);
-					cur = cur->next;
+					cur = blocked_queue->head;
 				}
 				sys_req(EXIT);
 			}
