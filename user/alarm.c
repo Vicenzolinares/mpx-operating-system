@@ -77,12 +77,16 @@ static void run_alarm_process(int slot)
 	int target_seconds = time_to_seconds(alarm->hours, alarm->minutes, alarm->seconds);
 	int current_seconds = time_to_seconds(get_hours(), get_minutes(), get_seconds());
 
+	char alarm_waiting_msg[] = "AlarmX waiting\r\n";
+	alarm_waiting_msg[5] = '0' + slot;
+
     for(;;)
     {
         if (target_seconds < alarm->start)
         {
             if (current_seconds >= alarm->start || current_seconds < target_seconds)
             {
+				sys_req(WRITE, COM1, alarm_waiting_msg, sizeof(alarm_waiting_msg));
                 sys_req(IDLE);
                 current_seconds = time_to_seconds(get_hours(), get_minutes(), get_seconds());
                 continue;
@@ -93,6 +97,7 @@ static void run_alarm_process(int slot)
         {
             if (current_seconds < target_seconds)
             {
+				sys_req(WRITE, COM1, alarm_waiting_msg, sizeof(alarm_waiting_msg));
                 sys_req(IDLE);
                 current_seconds = time_to_seconds(get_hours(), get_minutes(), get_seconds());
                 continue;
@@ -194,7 +199,7 @@ int create_alarm_process(int hours, int minutes, int seconds, const char *messag
 	memcpy(alarm_requests[slot].message, message, strlen(message) + 1);
 
 	build_alarm_name(slot, name);
-	if (create_pcb(name, USER, 5) != 0)
+	if (create_pcb(name, USER, 8) != 0)
 	{
 		alarm_requests[slot].active = false;
 		return -1;
