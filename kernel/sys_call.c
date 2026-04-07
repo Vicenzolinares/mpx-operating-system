@@ -62,6 +62,11 @@ struct context *sys_call(struct context *cont) {
             new_proc = new_proc->next;
         }
 
+        // fixes R3
+        // current process was not cleared when there is no processes in the queue
+        // was never a problem in R4, because comhand and idle were always in the queue
+        current_process = NULL;
+
         first_context->eax = 0;
         return first_context;
     }
