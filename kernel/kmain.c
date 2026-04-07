@@ -5,6 +5,7 @@
 #include <sys_req.h>
 #include <string.h>
 #include <memory.h>
+#include <umem.h>
 #include <comhand.h>
 #include <processes.h>  
 #include <mpx/kpcb.h>
@@ -84,7 +85,16 @@ void kmain(void)
     // 8) MPX Modules -- *headers vary*
 	// Module specific initialization -- not all modules require this.
     klogv(COM1, "Initializing MPX modules...");
-    // R5: sys_set_heap_functions(...);
+    klogv(COM1, "Initializing heap manager...");
+    if (initialize_heap(DEFAULT_HEAP_SIZE) == NULL)
+    {
+        klogv(COM1, "Heap initialization failed; continuing with fallback allocator.");
+    }
+    else
+    {
+        sys_set_heap_functions(allocate_memory, free_memory);
+        klogv(COM1, "Heap functions installed.");
+    }
 	// R4: create commhand and idle processes
 
     // create commhand process
