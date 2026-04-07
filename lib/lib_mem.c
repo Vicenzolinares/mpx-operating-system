@@ -7,11 +7,11 @@ MCB_list *allocated_list = &alist;
 
 void *initialize_heap(size_t size)
 {
-    void* heap = kmalloc(size, 0, NULL);
+    void* heap = kmalloc(size + sizeof(MCB), 0, NULL);
 
     MCB* initial_block = (MCB*) heap;
     initial_block->start_address = (void*)((int)heap + sizeof(MCB));
-    initial_block->size = size - sizeof(MCB);
+    initial_block->size = size;
     initial_block->next = NULL;
     initial_block->prev = NULL;
 
