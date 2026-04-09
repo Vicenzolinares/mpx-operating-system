@@ -1,7 +1,4 @@
 #include <umem.h>
-#include <sys_req.h>
-#include <mpx/device.h>
-#include <string.h>
 
 static void umem_write(const char *msg)
 {

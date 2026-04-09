@@ -3,6 +3,9 @@
 
 #include <lib_mem.h>
 #include <memory.h>
+#include <sys_req.h>
+#include <mpx/device.h>
+#include <string.h>
 
 
 #define DEFAULT_HEAP_SIZE 65536U
@@ -15,15 +18,11 @@
 #define HEAP_ERR_FREE_FAIL -4
 
 
-int parse_positive_int(const char *token, int *out_value);
-int parse_hex_address(const char *token, void **out_address);
-
-
-void show_allocated_mem(const char *address, int size);
-void show_free_mem(const char *address, int size);
-
 void allocate_mem(const char *size_token);
 
 void free_mem(const char *address_token);
+
+void show_allocated_mem(void);
+void show_free_mem(void);
 
 #endif
