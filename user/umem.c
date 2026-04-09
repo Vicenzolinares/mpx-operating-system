@@ -114,16 +114,102 @@ void free_mem(const char *address) //address given in hex
     mpx_write("Free successful.\r\n");
 }
 
-void show_allocated_mem(const char *address, int size) //address given in hex
+void show_allocated_mem() //address given in hex
 {
-    (void)address;
-    (void)size;
-    mpx_write("show_allocated not implemented yet.\r\n");
+    //walks through allocate_mem list
+    //prints info for each code block
+    //info: start address of block (in hexidecimal), size of block (in decimal)
+    MCB* current = allocated_list->head;
+    if(current == NULL)
+    {
+        char alloc_mem_err[] = "Allocated list empty\r\n";
+        sys_req(WRITE, COM1, alloc_mem_err, strlen(alloc_mem_err));
+    }
+    while(current != NULL)
+    {
+        char alloc_mcb[] = "MCB allocated\r\nAddress: ";
+        sys_req(WRITE, COM1, alloc_mcb, strlen(alloc_mcb));
+        //print current->start_address in hexidecimal, cast all of this into an integer
+            char alloc_start[9];
+            unsigned int addr = (unsigned int)current->start_address;
+            for(int i = 7; i >= 0; i--) {
+                alloc_start[7-i] = "0123456789ABCDEF"[(addr >> (i*4)) & 0xF];
+            }
+            alloc_start[8] = '\0';
+            sys_req(WRITE, COM1, alloc_start, strlen(alloc_start));
+        char alloc_mid[] = "\r\nSize: ";
+        sys_req(WRITE, COM1, alloc_mid, strlen(alloc_mid));
+        //print current->size in decimal
+            char alloc_size[11];
+            size_t sz = current->size;
+            int len = 0;
+            if (sz == 0) {
+                alloc_size[len++] = '0';
+            } else {
+                while (sz > 0) {
+                    alloc_size[len++] = '0' + (sz % 10);
+                    sz /= 10;
+                }
+                // reverse
+                for(int j = 0; j < len/2; j++) {
+                    char temp = alloc_size[j];
+                    alloc_size[j] = alloc_size[len-1-j];
+                    alloc_size[len-1-j] = temp;
+                }
+            }
+            alloc_size[len] = '\0';  
+            sys_req(WRITE, COM1, alloc_size, strlen(alloc_size));
+        char alloc_end[] = "\r\n\r\n";
+        sys_req(WRITE, COM1, alloc_end, strlen(alloc_end));
+        current = current->next;
+    }
 }
 
-void show_free_mem(const char *address, int size) //address given in hex
+void show_free_mem() //address given in hex
 {
-    (void)address;
-    (void)size;
-    mpx_write("show_free not implemented yet.\r\n");
+    //walks through free_mem list
+    //prints info for each code block
+    //info: start address of block (in hexidecimal), size of block (in decimal)
+    MCB* current = free_list->head;
+    if(current == NULL)
+    {
+        char free_mem_err[] = "Free list empty\r\n";
+        sys_req(WRITE, COM1, free_mem_err, strlen(free_mem_err));
+    }
+    while(current != NULL)
+    {
+        char free_mcb[] = "MCB free\r\nAddress: ";
+        sys_req(WRITE, COM1, free_mcb, strlen(free_mcb));
+        char free_start[9];
+        unsigned int addr = (unsigned int)current->start_address;
+        for(int i = 7; i >= 0; i--) {
+            free_start[7-i] = "0123456789ABCDEF"[(addr >> (i*4)) & 0xF];
+        }
+        free_start[8] = '\0';
+        sys_req(WRITE, COM1, free_start, 8);
+        char free_mid[] = "\r\nSize: ";
+        sys_req(WRITE, COM1, free_mid, strlen(free_mid));
+        char free_size[11];
+        size_t sz = current->size;
+        int len = 0;
+        if (sz == 0) {
+            free_size[len++] = '0';
+        } else {
+            while (sz > 0) {
+                free_size[len++] = '0' + (sz % 10);
+                sz /= 10;
+            }
+            // reverse
+            for(int j = 0; j < len/2; j++) {
+                char temp = free_size[j];
+                free_size[j] = free_size[len-1-j];
+                free_size[len-1-j] = temp;
+            }
+        }
+        free_size[len] = '\0';
+        sys_req(WRITE, COM1, free_size, len);
+        char free_end[] = "\r\n\r\n";
+        sys_req(WRITE, COM1, free_end, strlen(free_end));
+        current = current->next;
+    }
 }
