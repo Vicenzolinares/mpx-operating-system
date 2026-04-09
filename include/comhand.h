@@ -9,6 +9,7 @@
 #include <upcb.h>
 #include <loadr3.h>
 #include <alarm.h>
+#include <umem.h>
 
 /**
  @file comhand.h
