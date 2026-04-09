@@ -1,169 +1,181 @@
 #include <umem.h>
+
 #include <string.h>
 #include <sys_req.h>
 #include <mpx/device.h>
-#include <ctype.h>
 
-static void mpx_write(const char *s)
+static void umem_write(const char *msg)
 {
-	if (s == NULL)
+	if (msg == NULL)
+	{
 		return;
+	}
 
-	sys_req(WRITE, COM1, (char *)s, strlen(s));
+	sys_req(WRITE, COM1, (char *)msg, strlen(msg));
 }
 
-static int parse_decimal_size(const char *s, size_t *out)
+static int is_decimal_digit(char c)
 {
-	size_t value = 0;
-	int saw_digit = 0;
-
-	if (s == NULL || out == NULL)
-		return -1;
-
-	while (isspace(*s)) {
-		s++;
-	}
-
-	while (*s >= '0' && *s <= '9') {
-		size_t digit = (size_t)(*s - '0');
-		size_t next = value * 10 + digit;
-
-		if (next < value)
-			return -1;
-
-		value = next;
-		s++;
-		saw_digit = 1;
-	}
-
-	while (isspace(*s)) {
-		s++;
-	}
-
-	if (!saw_digit || *s != '\0' || value == 0)
-		return -1;
-
-	*out = value;
-	return 0;
+	return c >= '0' && c <= '9';
 }
 
-static int hex_value(char c)
+static int is_hex_digit(char c)
+{
+	return (c >= '0' && c <= '9')
+		|| (c >= 'a' && c <= 'f')
+		|| (c >= 'A' && c <= 'F');
+}
+
+static int hex_digit_value(char c)
 {
 	if (c >= '0' && c <= '9')
+	{
 		return c - '0';
+	}
+
 	if (c >= 'a' && c <= 'f')
-		return c - 'a' + 10;
-	if (c >= 'A' && c <= 'F')
-		return c - 'A' + 10;
-	return -1;
+	{
+		return 10 + (c - 'a');
+	}
+
+	return 10 + (c - 'A');
 }
 
-static int parse_hex_address(const char *s, void **out)
+static int parse_positive_decimal(const char *token, size_t *value)
 {
-	size_t value = 0;
-	int saw_digit = 0;
+	size_t parsed = 0;
 
-	if (s == NULL || out == NULL)
+	if (token == NULL || value == NULL || token[0] == '\0')
+	{
 		return -1;
-
-	while (isspace(*s)) {
-		s++;
 	}
 
-	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
-		s += 2;
-	}
-
-	while (*s != '\0') {
-		int digit = hex_value(*s);
-
-		if (digit < 0)
-			break;
-
-		if (value > (((size_t)-1) >> 4))
+	for (int i = 0; token[i] != '\0'; i++)
+	{
+		if (!is_decimal_digit(token[i]))
+		{
 			return -1;
+		}
 
-		value = (value << 4) | (size_t)digit;
-		s++;
-		saw_digit = 1;
+		parsed = parsed * 10 + (size_t)(token[i] - '0');
 	}
 
-	while (isspace(*s)) {
-		s++;
-	}
-
-	if (!saw_digit || *s != '\0' || value == 0)
+	if (parsed == 0)
+	{
 		return -1;
+	}
 
-	*out = (void *)value;
+	*value = parsed;
 	return 0;
 }
 
-static void to_hex_string(size_t value, char *out)
+static int parse_hex_address(const char *token, void **address)
 {
-	char temp[(sizeof(size_t) * 2) + 1];
-	int i = 0;
-	int j;
+	size_t parsed = 0;
+	int start = 0;
 
-	if (value == 0) {
-		out[0] = '0';
-		out[1] = 'x';
-		out[2] = '0';
-		out[3] = '\0';
+	if (token == NULL || address == NULL || token[0] == '\0')
+	{
+		return -1;
+	}
+
+	if (token[0] == '0' && (token[1] == 'x' || token[1] == 'X'))
+	{
+		start = 2;
+	}
+
+	if (token[start] == '\0')
+	{
+		return -1;
+	}
+
+	for (int i = start; token[i] != '\0'; i++)
+	{
+		if (!is_hex_digit(token[i]))
+		{
+			return -1;
+		}
+
+		parsed = (parsed * 16) + (size_t)hex_digit_value(token[i]);
+	}
+
+	if (parsed == 0)
+	{
+		return -1;
+	}
+
+	*address = (void *)parsed;
+	return 0;
+}
+
+static void write_hex_address(void *address)
+{
+	const char hex_chars[] = "0123456789ABCDEF";
+	size_t value = (size_t)address;
+	char reversed[(sizeof(size_t) * 2) + 1];
+	char output[(sizeof(size_t) * 2) + 5];
+	int reverse_len = 0;
+	int out = 0;
+
+	if (value == 0)
+	{
+		umem_write("0x0\r\n");
 		return;
 	}
 
-	while (value > 0) {
-		temp[i++] = "0123456789ABCDEF"[value & 0xF];
+	while (value > 0)
+	{
+		reversed[reverse_len++] = hex_chars[value & 0xF];
 		value >>= 4;
 	}
 
-	out[0] = '0';
-	out[1] = 'x';
+	output[out++] = '0';
+	output[out++] = 'x';
 
-	for (j = 0; j < i; j++) {
-		out[2 + j] = temp[i - 1 - j];
+	for (int i = reverse_len - 1; i >= 0; i--)
+	{
+		output[out++] = reversed[i];
 	}
 
-	out[2 + i] = '\0';
+	output[out++] = '\r';
+	output[out++] = '\n';
+	output[out] = '\0';
+
+	umem_write(output);
 }
 
-void allocate_mem(const char *size_arg)
+void allocate_mem(const char *size_token)
 {
-	size_t size;
-	void *ptr;
-	char address_text[(sizeof(size_t) * 2) + 3];
+	size_t size = 0;
 
-	if (parse_decimal_size(size_arg, &size) != 0) {
-		mpx_write("Error: Invalid size for 'allocate memory'.\r\n");
+	if (parse_positive_decimal(size_token, &size) != 0)
+	{
+		umem_write("Error: size must be a positive decimal integer.\r\n");
 		return;
 	}
 
-	ptr = allocate_memory(size);
-	if (ptr == NULL) {
-		mpx_write("Error: Memory allocation failed.\r\n");
+	void *address = allocate_memory(size);
+	if (address == NULL)
+	{
+		umem_write("Error: allocation failed.\r\n");
 		return;
 	}
 
-	to_hex_string((size_t)ptr, address_text);
-	mpx_write("Allocated memory at ");
-	mpx_write(address_text);
-	mpx_write("\r\n");
+	write_hex_address(address);
 }
 
-void free_mem(const char *address_arg)
+void free_mem(const char *address_token)
 {
-	void *address;
+	void *address = NULL;
 
-	if (parse_hex_address(address_arg, &address) != 0) {
-		mpx_write("Error: Invalid address for 'free memory'.\r\n");
+	if (parse_hex_address(address_token, &address) != 0)
+	{
+		umem_write("Error: address must be a valid hex value.\r\n");
 		return;
 	}
 
-	if (free_memory(address) != 0) {
-		mpx_write("Error: Memory free failed.\r\n");
-		return;
+	if (free_memory(address) != 0)
+	{
+		umem_write("Error: free failed.\r\n");
 	}
-
-	mpx_write("Memory freed.\r\n");
 }
