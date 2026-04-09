@@ -86,15 +86,7 @@ void kmain(void)
 	// Module specific initialization -- not all modules require this.
     klogv(COM1, "Initializing MPX modules...");
     klogv(COM1, "Initializing heap manager...");
-    if (initialize_heap(DEFAULT_HEAP_SIZE) == NULL)
-    {
-        klogv(COM1, "Heap initialization failed; continuing with fallback allocator.");
-    }
-    else
-    {
-        sys_set_heap_functions(allocate_memory, free_memory);
-        klogv(COM1, "Heap functions installed.");
-    }
+    initialize_heap(50000);
 	// R4: create commhand and idle processes
 
     // create commhand process
