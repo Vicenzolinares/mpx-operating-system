@@ -3,115 +3,180 @@
 #include <mpx/device.h>
 #include <string.h>
 
-static void mpx_write(const char *s)
+static void umem_write(const char *msg)
 {
-    if (s != NULL) {
-        sys_req(WRITE, COM1, (char *)s, strlen(s));
-    }
+	if (msg == NULL)
+	{
+		return;
+	}
+
+	sys_req(WRITE, COM1, (char *)msg, strlen(msg));
 }
 
-int parse_positive_int(const char *token, int *out_value)
+static int is_decimal_digit(char c)
 {
-    int value = 0;
-    int i = 0;
-
-    if (token == NULL || out_value == NULL || token[0] == '\0') {
-        return HEAP_ERR_BAD_PARAM;
-    }
-
-    while (token[i] != '\0') {
-        if (token[i] < '0' || token[i] > '9') {
-            return HEAP_ERR_BAD_FORMAT;
-        }
-        if (value > (2147483647 - (token[i] - '0')) / 10) {
-            return HEAP_ERR_BAD_FORMAT;
-        }
-        value = (value * 10) + (token[i] - '0');
-        i++;
-    }
-
-    if (value <= 0) {
-        return HEAP_ERR_BAD_FORMAT;
-    }
-
-    *out_value = value;
-    return HEAP_OK;
+	return c >= '0' && c <= '9';
 }
 
-int parse_hex_address(const char *token, void **out_address)
+static int is_hex_digit(char c)
 {
-    unsigned long value = 0;
-    int i = 0;
-
-    if (token == NULL || out_address == NULL || token[0] == '\0') {
-        return HEAP_ERR_BAD_PARAM;
-    }
-
-    if (token[0] == '0' && (token[1] == 'x' || token[1] == 'X')) {
-        i = 2;
-    }
-
-    if (token[i] == '\0') {
-        return HEAP_ERR_BAD_FORMAT;
-    }
-
-    while (token[i] != '\0') {
-        value <<= 4;
-
-        if (token[i] >= '0' && token[i] <= '9') {
-            value += (unsigned long)(token[i] - '0');
-        } else if (token[i] >= 'a' && token[i] <= 'f') {
-            value += (unsigned long)(token[i] - 'a' + 10);
-        } else if (token[i] >= 'A' && token[i] <= 'F') {
-            value += (unsigned long)(token[i] - 'A' + 10);
-        } else {
-            return HEAP_ERR_BAD_FORMAT;
-        }
-
-        i++;
-    }
-
-    if (value == 0UL) {
-        return HEAP_ERR_BAD_FORMAT;
-    }
-
-    *out_address = (void *)value;
-    return HEAP_OK;
+	return (c >= '0' && c <= '9')
+		|| (c >= 'a' && c <= 'f')
+		|| (c >= 'A' && c <= 'F');
 }
 
-void allocate_mem(int size)
+static int hex_digit_value(char c)
 {
-    void *ptr;
+	if (c >= '0' && c <= '9')
+	{
+		return c - '0';
+	}
 
-    if (size <= 0) {
-        mpx_write("Error: allocation size must be a positive integer.\r\n");
-        return;
-    }
+	if (c >= 'a' && c <= 'f')
+	{
+		return 10 + (c - 'a');
+	}
 
-    ptr = sys_alloc_mem((size_t)size);
-    if (ptr == NULL) {
-        mpx_write("Error: allocation failed.\r\n");
-        return;
-    }
-
-    mpx_write("Allocation successful.\r\n");
+	return 10 + (c - 'A');
 }
 
-void free_mem(const char *address) //address given in hex
+static int parse_positive_decimal(const char *token, size_t *value)
 {
-    void *ptr = NULL;
+	size_t parsed = 0;
 
-    if (parse_hex_address(address, &ptr) != HEAP_OK) {
-        mpx_write("Error: invalid address. Use a non-zero hexadecimal address.\r\n");
-        return;
-    }
+	if (token == NULL || value == NULL || token[0] == '\0')
+	{
+		return -1;
+	}
 
-    if (sys_free_mem(ptr) != 0) {
-        mpx_write("Error: free failed.\r\n");
-        return;
-    }
+	for (int i = 0; token[i] != '\0'; i++)
+	{
+		if (!is_decimal_digit(token[i]))
+		{
+			return -1;
+		}
 
-    mpx_write("Free successful.\r\n");
+		parsed = parsed * 10 + (size_t)(token[i] - '0');
+	}
+
+	if (parsed == 0)
+	{
+		return -1;
+	}
+
+	*value = parsed;
+	return 0;
+}
+
+static int parse_hex_address(const char *token, void **address)
+{
+	size_t parsed = 0;
+	int start = 0;
+
+	if (token == NULL || address == NULL || token[0] == '\0')
+	{
+		return -1;
+	}
+
+	if (token[0] == '0' && (token[1] == 'x' || token[1] == 'X'))
+	{
+		start = 2;
+	}
+
+	if (token[start] == '\0')
+	{
+		return -1;
+	}
+
+	for (int i = start; token[i] != '\0'; i++)
+	{
+		if (!is_hex_digit(token[i]))
+		{
+			return -1;
+		}
+
+		parsed = (parsed * 16) + (size_t)hex_digit_value(token[i]);
+	}
+
+	if (parsed == 0)
+	{
+		return -1;
+	}
+
+	*address = (void *)parsed;
+	return 0;
+}
+
+static void write_hex_address(void *address)
+{
+	const char hex_chars[] = "0123456789ABCDEF";
+	size_t value = (size_t)address;
+	char reversed[(sizeof(size_t) * 2) + 1];
+	char output[(sizeof(size_t) * 2) + 5];
+	int reverse_len = 0;
+	int out = 0;
+
+	if (value == 0)
+	{
+		umem_write("0x0\r\n");
+		return;
+	}
+
+	while (value > 0)
+	{
+		reversed[reverse_len++] = hex_chars[value & 0xF];
+		value >>= 4;
+	}
+
+	output[out++] = '0';
+	output[out++] = 'x';
+
+	for (int i = reverse_len - 1; i >= 0; i--)
+	{
+		output[out++] = reversed[i];
+	}
+
+	output[out++] = '\r';
+	output[out++] = '\n';
+	output[out] = '\0';
+
+	umem_write(output);
+}
+
+void allocate_mem(const char *size_token)
+{
+	size_t size = 0;
+
+	if (parse_positive_decimal(size_token, &size) != 0)
+	{
+		umem_write("Error: size must be a positive decimal integer.\r\n");
+		return;
+	}
+
+	void *address = allocate_memory(size);
+	if (address == NULL)
+	{
+		umem_write("Error: allocation failed.\r\n");
+		return;
+	}
+
+	write_hex_address(address);
+}
+
+void free_mem(const char *address_token)
+{
+	void *address = NULL;
+
+	if (parse_hex_address(address_token, &address) != 0)
+	{
+		umem_write("Error: address must be a valid hex value.\r\n");
+		return;
+	}
+
+	if (free_memory(address) != 0)
+	{
+		umem_write("Error: free failed.\r\n");
+	}
 }
 
 void show_allocated_mem() //address given in hex

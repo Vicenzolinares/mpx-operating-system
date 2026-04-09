@@ -24,4 +24,8 @@ void free_mem(const char *address);
 void show_allocated_mem(const char *address, int size);
 void show_free_mem(const char *address, int size);
 
+void allocate_mem(const char *size_token);
+
+void free_mem(const char *address_token);
+
 #endif
