@@ -24,8 +24,8 @@ void cmd_help(void)
     mpx_write("  time get - Displays the current system time [in UTC time]\r\n");
     mpx_write("  time set <hour> <minute> <second> - Sets the system time hh mm ss [in UTC time]\r\n");
     mpx_write("  version - Shows build/version information\r\n");
-	mpx_write("  allocate memory <size> - Allocate heap memory with decimal size\r\n");
-	mpx_write("  free memory <address> - Free heap memory at hex address\r\n");
+	mpx_write("  allocate memory <decimal size> - Allocates heap memory and prints the usable address\r\n");
+	mpx_write("  free memory <hex address> - Frees heap memory at the given usable address\r\n");
     mpx_write("\r\n");
     mpx_write("pcb Process Commands:\r\n");
     mpx_write("  pcb delete <name> - Delete a non-system process | <name> 1-8 characters\r\n");
@@ -95,6 +95,50 @@ void comhand(void)
 				continue;
 			}
 			cmd_version();
+		}
+
+		// allocate memory <decimal size>
+		else if (strcmp(parse_string_ptr, "allocate") == 0)
+		{
+			char *target = strtok(NULL, WHITESPACE_CHARS);
+			char *size_token = strtok(NULL, WHITESPACE_CHARS);
+
+			if (target == NULL || strcmp(target, "memory") != 0 || size_token == NULL)
+			{
+				mpx_write("Error: Use 'allocate memory <decimal size>'.\r\n");
+				continue;
+			}
+
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr != NULL)
+			{
+				mpx_write("Error: 'allocate memory' command takes 1 argument.\r\n");
+				continue;
+			}
+
+			allocate_mem(size_token);
+		}
+
+		// free memory <hex address>
+		else if (strcmp(parse_string_ptr, "free") == 0)
+		{
+			char *target = strtok(NULL, WHITESPACE_CHARS);
+			char *address_token = strtok(NULL, WHITESPACE_CHARS);
+
+			if (target == NULL || strcmp(target, "memory") != 0 || address_token == NULL)
+			{
+				mpx_write("Error: Use 'free memory <hex address>'.\r\n");
+				continue;
+			}
+
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr != NULL)
+			{
+				mpx_write("Error: 'free memory' command takes 1 argument.\r\n");
+				continue;
+			}
+
+			free_mem(address_token);
 		}
 
 		// date command
@@ -335,64 +379,6 @@ void comhand(void)
 			{
 				mpx_write("Alarm created.\r\n");
 			}
-		}
-
-		// allocate memory <size>
-		else if (strcmp(parse_string_ptr, "allocate") == 0)
-		{
-			char *target = strtok(NULL, WHITESPACE_CHARS);
-			char *size_arg;
-
-			if (target == NULL || strcmp(target, "memory") != 0)
-			{
-				mpx_write("Error: Use 'allocate memory <size>'.\r\n");
-				continue;
-			}
-
-			size_arg = strtok(NULL, WHITESPACE_CHARS);
-			if (size_arg == NULL)
-			{
-				mpx_write("Error: 'allocate memory' command takes 1 argument.\r\n");
-				continue;
-			}
-
-			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-			if (parse_string_ptr != NULL)
-			{
-				mpx_write("Error: 'allocate memory' command takes 1 argument.\r\n");
-				continue;
-			}
-
-			allocate_mem(size_arg);
-		}
-
-		// free memory <address>
-		else if (strcmp(parse_string_ptr, "free") == 0)
-		{
-			char *target = strtok(NULL, WHITESPACE_CHARS);
-			char *address_arg;
-
-			if (target == NULL || strcmp(target, "memory") != 0)
-			{
-				mpx_write("Error: Use 'free memory <address>'.\r\n");
-				continue;
-			}
-
-			address_arg = strtok(NULL, WHITESPACE_CHARS);
-			if (address_arg == NULL)
-			{
-				mpx_write("Error: 'free memory' command takes 1 argument.\r\n");
-				continue;
-			}
-
-			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-			if (parse_string_ptr != NULL)
-			{
-				mpx_write("Error: 'free memory' command takes 1 argument.\r\n");
-				continue;
-			}
-
-			free_mem(address_arg);
 		}
 
 		// loadr3 command
