@@ -26,6 +26,8 @@ void cmd_help(void)
     mpx_write("  version - Shows build/version information\r\n");
 	mpx_write("  allocate memory <decimal size> - Allocates heap memory and prints the usable address\r\n");
 	mpx_write("  free memory <hex address> - Frees heap memory at the given usable address\r\n");
+	mpx_write("  mem show allocated - Shows all allocated memory blocks\r\n");
+	mpx_write("  mem show free - Shows all free memory blocks\r\n");
     mpx_write("\r\n");
     mpx_write("pcb Process Commands:\r\n");
     mpx_write("  pcb delete <name> - Delete a non-system process | <name> 1-8 characters\r\n");
@@ -139,6 +141,39 @@ void comhand(void)
 			}
 
 			free_mem(address_token);
+		}
+
+		// mem show allocated | mem show free
+		else if (strcmp(parse_string_ptr, "mem") == 0)
+		{
+			char *action = strtok(NULL, WHITESPACE_CHARS);
+			char *target = strtok(NULL, WHITESPACE_CHARS);
+
+			if (action == NULL || strcmp(action, "show") != 0 || target == NULL)
+			{
+				mpx_write("Error: Use 'mem show allocated' or 'mem show free'.\r\n");
+				continue;
+			}
+
+			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
+			if (parse_string_ptr != NULL)
+			{
+				mpx_write("Error: 'mem show' command takes 1 argument.\r\n");
+				continue;
+			}
+
+			if (strcmp(target, "allocated") == 0)
+			{
+				show_allocated_mem();
+			}
+			else if (strcmp(target, "free") == 0)
+			{
+				show_free_mem();
+			}
+			else
+			{
+				mpx_write("Error: Use 'mem show allocated' or 'mem show free'.\r\n");
+			}
 		}
 
 		// date command
