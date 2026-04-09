@@ -52,7 +52,7 @@ void cmd_help(void)
 
 void cmd_version(void)
 {
-	mpx_write("MPX R5\r\n");
+	mpx_write("MPX R5 Phase 1\r\n");
 	mpx_write("Build: ");
 	mpx_write(__DATE__);
 	mpx_write(" ");
