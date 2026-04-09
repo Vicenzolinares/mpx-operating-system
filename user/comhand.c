@@ -24,10 +24,6 @@ void cmd_help(void)
     mpx_write("  time get - Displays the current system time [in UTC time]\r\n");
     mpx_write("  time set <hour> <minute> <second> - Sets the system time hh mm ss [in UTC time]\r\n");
     mpx_write("  version - Shows build/version information\r\n");
-	mpx_write("  allocate memory <decimal size> - Allocates heap memory and prints the usable address\r\n");
-	mpx_write("  free memory <hex address> - Frees heap memory at the given usable address\r\n");
-	mpx_write("  mem show allocated - Shows all allocated memory blocks\r\n");
-	mpx_write("  mem show free - Shows all free memory blocks\r\n");
     mpx_write("\r\n");
     mpx_write("pcb Process Commands:\r\n");
     mpx_write("  pcb delete <name> - Delete a non-system process | <name> 1-8 characters\r\n");
@@ -46,6 +42,12 @@ void cmd_help(void)
 	mpx_write("  loadr3 - Load all R3 processes as ready, non-suspended\r\n");
 	mpx_write("  loadr3suspended - Load all R3 processes as ready, suspended\r\n");
 	mpx_write("  resume all - Resume all ready, suspended processes\r\n");
+	mpx_write("\r\n");
+	mpx_write("Memory Commands:\r\n");
+	mpx_write("  allocate memory <decimal size> - Allocates heap memory and prints the usable address\r\n");
+	mpx_write("  free memory <hex address> - Frees heap memory at the given usable address\r\n");
+	mpx_write("  mem show allocated - Shows all allocated memory blocks\r\n");
+	mpx_write("  mem show free - Shows all free memory blocks\r\n");
 }
 
 void cmd_version(void)
