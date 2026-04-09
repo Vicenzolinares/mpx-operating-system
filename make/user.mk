@@ -19,8 +19,8 @@ user/loadr3.o: user/loadr3.c include/upcb.h include/mpx/sys_call.h \
 user/alarm.o: user/alarm.c include/comhand.h include/sys_req.h \
   include/string.h include/mpx/kpcb.h include/upcb.h
 
-user/umem.o: user/umem.c include/lib_mem.h include/user/memory.h \
-  include/sys_req.h iclude/mpx/device.h include/string.h
+user/umem.o: user/umem.c include/lib_mem.h include/memory.h \
+  include/sys_req.h include/mpx/device.h include/string.h
 
 USER_OBJECTS=\
 	user/core.o\

@@ -176,7 +176,7 @@ void free_mem(const char *address_token)
 	}
 }
 
-void show_allocated_mem() //address given in hex
+void show_allocated_mem(void) //address given in hex
 {
     //walks through allocate_mem list
     //prints info for each code block
@@ -227,7 +227,7 @@ void show_allocated_mem() //address given in hex
     }
 }
 
-void show_free_mem() //address given in hex
+void show_free_mem(void) //address given in hex
 {
     //walks through free_mem list
     //prints info for each code block
