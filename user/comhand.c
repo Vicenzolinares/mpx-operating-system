@@ -44,15 +44,13 @@ void cmd_help(void)
 	mpx_write("  resume all - Resume all ready, suspended processes\r\n");
 	mpx_write("\r\n");
 	mpx_write("Memory Commands:\r\n");
-	mpx_write("  allocate memory <decimal size> - Allocates heap memory and prints the usable address\r\n");
-	mpx_write("  free memory <hex address> - Frees heap memory at the given usable address\r\n");
 	mpx_write("  mem show allocated - Shows all allocated memory blocks\r\n");
 	mpx_write("  mem show free - Shows all free memory blocks\r\n");
 }
 
 void cmd_version(void)
 {
-	mpx_write("MPX R5 Phase 1\r\n");
+	mpx_write("MPX R5 Phase 2\r\n");
 	mpx_write("Build: ");
 	mpx_write(__DATE__);
 	mpx_write(" ");
@@ -99,50 +97,6 @@ void comhand(void)
 				continue;
 			}
 			cmd_version();
-		}
-
-		// allocate memory <decimal size>
-		else if (strcmp(parse_string_ptr, "allocate") == 0)
-		{
-			char *target = strtok(NULL, WHITESPACE_CHARS);
-			char *size_token = strtok(NULL, WHITESPACE_CHARS);
-
-			if (target == NULL || strcmp(target, "memory") != 0 || size_token == NULL)
-			{
-				mpx_write("Error: Use 'allocate memory <decimal size>'.\r\n");
-				continue;
-			}
-
-			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-			if (parse_string_ptr != NULL)
-			{
-				mpx_write("Error: 'allocate memory' command takes 1 argument.\r\n");
-				continue;
-			}
-
-			allocate_mem(size_token);
-		}
-
-		// free memory <hex address>
-		else if (strcmp(parse_string_ptr, "free") == 0)
-		{
-			char *target = strtok(NULL, WHITESPACE_CHARS);
-			char *address_token = strtok(NULL, WHITESPACE_CHARS);
-
-			if (target == NULL || strcmp(target, "memory") != 0 || address_token == NULL)
-			{
-				mpx_write("Error: Use 'free memory <hex address>'.\r\n");
-				continue;
-			}
-
-			parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-			if (parse_string_ptr != NULL)
-			{
-				mpx_write("Error: 'free memory' command takes 1 argument.\r\n");
-				continue;
-			}
-
-			free_mem(address_token);
 		}
 
 		// mem show allocated | mem show free

@@ -87,6 +87,7 @@ void kmain(void)
     klogv(COM1, "Initializing MPX modules...");
     klogv(COM1, "Initializing heap manager...");
     initialize_heap(50000);
+	sys_set_heap_functions(allocate_memory, free_memory);
 	// R4: create commhand and idle processes
 
     // create commhand process
