@@ -5,6 +5,7 @@
 #include <sys_req.h>
 #include <string.h>
 #include <stdint.h>
+#include <mpx/io_scheduler.h>
 
 /**
  @file sys_call.h

@@ -16,7 +16,11 @@ kernel/krtc.o: kernel/krtc.c include/mpx/io.h include/mpx/interrupts.h
 
 kernel/kpcb.o: kernel/kpcb.c include/memory.h include/string.h
 
-kernel/sys_call.o: kernel/sys_call.c include/sys_req.h include/string.h
+kernel/sys_call.o: kernel/sys_call.c include/sys_req.h include/string.h \
+  include/mpx/io_scheduler.h
+
+kernel/io_scheduler.o: kernel/io_scheduler.c include/mpx/kpcb.h \
+  include/mpx/device.h include/sys_req.h
 
 KERNEL_OBJECTS=\
 	kernel/core-asm.o\
@@ -26,4 +30,5 @@ KERNEL_OBJECTS=\
 	kernel/core-c.o\
   kernel/krtc.o\
   kernel/kpcb.o\
-  kernel/sys_call.o
+  kernel/sys_call.o\
+  kernel/io_scheduler.o
