@@ -18,9 +18,12 @@ kernel/kpcb.o: kernel/kpcb.c include/memory.h include/string.h
 
 kernel/sys_call.o: kernel/sys_call.c include/sys_req.h include/string.h
 
+kernel/serial_isr.o: kernel/serial_isr.s
+
 KERNEL_OBJECTS=\
 	kernel/core-asm.o\
 	kernel/sys_call_isr.o\
+	kernel/serial_isr.o\
 	kernel/serial.o\
 	kernel/kmain.o\
 	kernel/core-c.o\
