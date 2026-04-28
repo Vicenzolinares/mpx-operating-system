@@ -20,7 +20,7 @@ kernel/sys_call.o: kernel/sys_call.c include/sys_req.h include/string.h \
   include/mpx/io_scheduler.h
 
 kernel/io_scheduler.o: kernel/io_scheduler.c include/mpx/kpcb.h \
-  include/mpx/device.h include/sys_req.h
+  include/mpx/device.h include/sys_req.h include/mpx/iocb.h
 
 KERNEL_OBJECTS=\
 	kernel/core-asm.o\
