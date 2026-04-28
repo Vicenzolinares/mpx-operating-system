@@ -49,40 +49,7 @@ struct dcb {
 static int initialized[4] = { 0 };
 static struct dcb com1_dcb = { 0 };
 
-void serial_isr(void *);
-
-__asm__(
-".globl serial_isr\n"
-"serial_isr:\n"
-"\tpushl %ebp\n"
-"\tpushl %edi\n"
-"\tpushl %esi\n"
-"\tpushl %edx\n"
-"\tpushl %ecx\n"
-"\tpushl %ebx\n"
-"\tpushl %eax\n"
-"\tpushl %ss\n"
-"\tpushl %gs\n"
-"\tpushl %fs\n"
-"\tpushl %es\n"
-"\tpushl %ds\n"
-"\tpushl %esp\n"
-"\tcall serial_interrupt\n"
-"\taddl $4, %esp\n"
-"\tpopl %ds\n"
-"\tpopl %es\n"
-"\tpopl %fs\n"
-"\tpopl %gs\n"
-"\tpopl %ss\n"
-"\tpopl %eax\n"
-"\tpopl %ebx\n"
-"\tpopl %ecx\n"
-"\tpopl %edx\n"
-"\tpopl %esi\n"
-"\tpopl %edi\n"
-"\tpopl %ebp\n"
-"\tiret\n"
-);
+extern void serial_isr(void *);
 
 static int serial_devno(device dev)
 {
