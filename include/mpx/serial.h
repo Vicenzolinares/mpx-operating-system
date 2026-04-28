@@ -35,4 +35,25 @@ int serial_out(device dev, const char *buffer, size_t len);
 
 int serial_poll(device dev, char *buffer, size_t len);
 
+/** Open COM1 for interrupt-driven serial I/O. */
+int serial_open(device dev, int speed);
+
+/** Close COM1 and clear serial DCB state. */
+int serial_close(device dev);
+
+/** Start an interrupt-driven read into a caller buffer. */
+int serial_read(device dev, char *buf, size_t size);
+
+/** Start an interrupt-driven write from a caller buffer. */
+int serial_write(device dev, const char *buf, size_t size);
+
+/** Dispatch UART interrupts to RX/TX handlers. */
+void serial_interrupt(void *int_frame);
+
+/** Handle receive-data UART interrupts. */
+void serial_input_interrupt(void);
+
+/** Handle transmitter-empty UART interrupts. */
+void serial_output_interrupt(void);
+
 #endif
