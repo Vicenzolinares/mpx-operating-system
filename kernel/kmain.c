@@ -64,6 +64,9 @@ void kmain(void)
     klogv(COM1, "Initializing Programmable Interrupt Controller...");
     pic_init();
 
+	// Install COM1 ISR and unmask IRQ4 after IDT/PIC setup is complete.
+	serial_open(COM1, 9600);
+
     // 6) Reenable interrupts -- <mpx/interrupts.h>
 	// Now that interrupt routines are set up, allow interrupts to happen
 	// again.
