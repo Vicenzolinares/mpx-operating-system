@@ -27,8 +27,6 @@ void cmd_help(void)
     mpx_write("\r\n");
     mpx_write("pcb Process Commands:\r\n");
     mpx_write("  pcb delete <name> - Delete a non-system process | <name> 1-8 characters\r\n");
-    mpx_write("  pcb block <name> - Block a non-system process | <name> 1-8 characters\r\n");
-    mpx_write("  pcb unblock <name> - Unblock a process | <name> 1-8 characters\r\n");
     mpx_write("  pcb suspend <name> - Suspend a non-system process | <name> 1-8 characters\r\n");
     mpx_write("  pcb resume <name> - Resume a process | <name> 1-8 characters\r\n");
     mpx_write("  pcb set priority <name> <priority> - Set non-system process priority | <name> 1-8 characters | <priority> 0-9\r\n");
@@ -50,7 +48,7 @@ void cmd_help(void)
 
 void cmd_version(void)
 {
-	mpx_write("MPX R5 Phase 2\r\n");
+	mpx_write("MPX R6 - Interrupt Driven I/O\r\n");
 	mpx_write("Build: ");
 	mpx_write(__DATE__);
 	mpx_write(" ");
@@ -471,54 +469,6 @@ void comhand(void)
 				if (delete_pcb(name) == 0)
 				{
 					mpx_write("PCB deleted.\r\n");
-				}
-			}
-
-			// pcb block <name>
-			else if (strcmp(parse_string_ptr, "block") == 0)
-			{
-				char *name = strtok(NULL, WHITESPACE_CHARS);
-
-				if (name == NULL)
-				{
-					mpx_write("Error: 'pcb block' command takes 1 argument.\r\n");
-					continue;
-				}
-
-				parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-				if (parse_string_ptr != NULL)
-				{
-					mpx_write("Error: 'pcb block' command takes 1 argument.\r\n");
-					continue;
-				}
-
-				if (block_pcb(name) == 0)
-				{
-					mpx_write("PCB blocked.\r\n");
-				}
-			}
-
-			// pcb unblock <name>
-			else if (strcmp(parse_string_ptr, "unblock") == 0)
-			{
-				char *name = strtok(NULL, WHITESPACE_CHARS);
-
-				if (name == NULL)
-				{
-					mpx_write("Error: 'pcb unblock' command takes 1 argument.\r\n");
-					continue;
-				}
-
-				parse_string_ptr = strtok(NULL, WHITESPACE_CHARS);
-				if (parse_string_ptr != NULL)
-				{
-					mpx_write("Error: 'pcb unblock' command takes 1 argument.\r\n");
-					continue;
-				}
-
-				if (unblock_pcb(name) == 0)
-				{
-					mpx_write("PCB unblocked.\r\n");
 				}
 			}
 
