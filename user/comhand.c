@@ -66,6 +66,7 @@ void comhand(void)
 		mpx_write("mpx> ");
 		char buf[BUFFER_SIZE] = { 0 };
 		sys_req(READ, COM1, buf, BUFFER_SIZE);
+		mpx_write("\r\n");
 
 		char *parse_string_ptr = strtok(buf, WHITESPACE_CHARS);
 

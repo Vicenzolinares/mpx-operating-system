@@ -30,6 +30,7 @@ void kmain(void)
 	// output should come first as it describes what is about to happen.
     serial_init(COM1);
     klogv(COM1, "Initialized serial I/O on COM1...");
+	serial_open(COM1, 9600);
 
     // 1) Global Descriptor Table (GDT) -- <mpx/gdt.h>
 	// Keeps track of the various memory segments (Code, Data, Stack, etc.)

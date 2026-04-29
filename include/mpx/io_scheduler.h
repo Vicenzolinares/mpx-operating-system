@@ -6,6 +6,8 @@
 #include <sys_req.h>
 #include <stddef.h>
 #include <mpx/iocb.h>
+#include <mpx/serial.h>
+#include <upcb.h>
 
 void io_schedule(device device, op_code op, char* buf, size_t len, PCB* current_process);
 

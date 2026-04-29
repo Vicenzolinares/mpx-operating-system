@@ -78,7 +78,7 @@ struct context *sys_call(struct context *cont) {
         current_process->execution = BLOCKED;
         pcb_insert(current_process);
 
-        io_schedule(cont->ebx, cont->eax, cont->ecx, cont->edx, current_process);
+        io_schedule(cont->ebx, cont->eax, (char *)cont->ecx, cont->edx, current_process);
 
         PCB *new_proc = ready_queue->head;
         while (new_proc != NULL)
@@ -95,5 +95,8 @@ struct context *sys_call(struct context *cont) {
 
             new_proc = new_proc->next;
         }
+
+        cont->eax = 0;
+        return cont;
     }
 }

@@ -122,7 +122,7 @@ void proc5(void)
 /***********************************************************************/
 void sys_idle_process(void)
 {
-	char msg[] = "IDLE PROCESS EXECUTING.\r\n";
+	// char msg[] = "IDLE PROCESS EXECUTING.\r\n";
 	
 	for (;;) {
 		// sys_req(WRITE, COM1, msg, strlen(msg));

@@ -3,11 +3,33 @@
 
 #include <stddef.h>
 #include <mpx/device.h>
+#include <mpx/iocb.h>
 
 /**
  @file mpx/serial.h
  @brief Kernel functions and constants for handling serial I/O
 */
+
+#define READ_BUFFER_SIZE 256
+
+struct dcb {
+	int open;
+	int reading;
+	int writing;
+	char *read_buf;
+	size_t read_size;
+	size_t read_count;
+	const char *write_buf;
+	size_t write_size;
+	size_t write_count;
+	char input_ring[READ_BUFFER_SIZE];
+	size_t input_head;
+	size_t input_tail;
+	struct IOCB *iocb_head;
+	struct IOCB *iocb_tail;
+};
+
+extern struct dcb* com1_dcb;
 
 /**
  Initializes devices for user input and output

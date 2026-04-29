@@ -1,7 +1,7 @@
 .POSIX:
 
 kernel/serial.o: kernel/serial.c include/mpx/io.h include/mpx/serial.h \
-  include/mpx/device.h include/sys_req.h
+  include/mpx/device.h include/sys_req.h include/mpx/iocb.h
 
 kernel/kmain.o: kernel/kmain.c include/mpx/gdt.h include/mpx/interrupts.h \
   include/mpx/serial.h include/mpx/device.h include/mpx/vm.h \
@@ -20,7 +20,8 @@ kernel/sys_call.o: kernel/sys_call.c include/sys_req.h include/string.h \
   include/mpx/io_scheduler.h
 
 kernel/io_scheduler.o: kernel/io_scheduler.c include/mpx/kpcb.h \
-  include/mpx/device.h include/sys_req.h include/mpx/iocb.h
+  include/mpx/device.h include/sys_req.h include/mpx/iocb.h \
+  include/mpx/serial.h include/upcb.h
 
 kernel/serial_isr.o: kernel/serial_isr.s
 

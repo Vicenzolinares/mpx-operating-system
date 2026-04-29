@@ -21,7 +21,6 @@ enum uart_registers {
 
 #define PIC1_DATA_PORT 0x21
 #define COM1_IRQ_MASK_BIT 0x10
-#define READ_BUFFER_SIZE 256
 #define IER_RX_INT 0x01
 #define IER_TX_INT 0x02
 #define IIR_NO_PENDING 0x01
@@ -31,23 +30,9 @@ enum uart_registers {
 #define LSR_DATA_READY 0x01
 #define LSR_THR_EMPTY 0x20
 
-struct dcb {
-	int open;
-	int reading;
-	int writing;
-	char *read_buf;
-	size_t read_size;
-	size_t read_count;
-	const char *write_buf;
-	size_t write_size;
-	size_t write_count;
-	char input_ring[READ_BUFFER_SIZE];
-	size_t input_head;
-	size_t input_tail;
-};
-
 static int initialized[4] = { 0 };
-static struct dcb com1_dcb = { 0 };
+static struct dcb com1_dcb_init = { 0 };
+struct dcb* com1_dcb = &com1_dcb_init;
 
 extern void serial_isr(void *);
 
@@ -64,17 +49,19 @@ static int serial_devno(device dev)
 
 static void dcb_setup(void)
 {
-	com1_dcb.open = 1;
-	com1_dcb.reading = 0;
-	com1_dcb.writing = 0;
-	com1_dcb.read_buf = NULL;
-	com1_dcb.read_size = 0;
-	com1_dcb.read_count = 0;
-	com1_dcb.write_buf = NULL;
-	com1_dcb.write_size = 0;
-	com1_dcb.write_count = 0;
-	com1_dcb.input_head = 0;
-	com1_dcb.input_tail = 0;
+	com1_dcb->open = 1;
+	com1_dcb->reading = 0;
+	com1_dcb->writing = 0;
+	com1_dcb->read_buf = NULL;
+	com1_dcb->read_size = 0;
+	com1_dcb->read_count = 0;
+	com1_dcb->write_buf = NULL;
+	com1_dcb->write_size = 0;
+	com1_dcb->write_count = 0;
+	com1_dcb->input_head = 0;
+	com1_dcb->input_tail = 0;
+	com1_dcb->iocb_head = NULL;
+	com1_dcb->iocb_tail = NULL;
 }
 
 static void enable_com1_irq(void)
@@ -93,11 +80,11 @@ static void disable_com1_irq(void)
 
 static size_t ring_used(void)
 {
-	if (com1_dcb.input_head >= com1_dcb.input_tail) {
-		return com1_dcb.input_head - com1_dcb.input_tail;
+	if (com1_dcb->input_head >= com1_dcb->input_tail) {
+		return com1_dcb->input_head - com1_dcb->input_tail;
 	}
 
-	return READ_BUFFER_SIZE - (com1_dcb.input_tail - com1_dcb.input_head);
+	return READ_BUFFER_SIZE - (com1_dcb->input_tail - com1_dcb->input_head);
 }
 
 static int ring_pop(char *out)
@@ -106,45 +93,45 @@ static int ring_pop(char *out)
 		return 0;
 	}
 
-	*out = com1_dcb.input_ring[com1_dcb.input_tail];
-	com1_dcb.input_tail = (com1_dcb.input_tail + 1) % READ_BUFFER_SIZE;
+	*out = com1_dcb->input_ring[com1_dcb->input_tail];
+	com1_dcb->input_tail = (com1_dcb->input_tail + 1) % READ_BUFFER_SIZE;
 	return 1;
 }
 
 static void ring_push(char ch)
 {
-	size_t next = (com1_dcb.input_head + 1) % READ_BUFFER_SIZE;
-	if (next == com1_dcb.input_tail) {
+	size_t next = (com1_dcb->input_head + 1) % READ_BUFFER_SIZE;
+	if (next == com1_dcb->input_tail) {
 		return;
 	}
 
-	com1_dcb.input_ring[com1_dcb.input_head] = ch;
-	com1_dcb.input_head = next;
+	com1_dcb->input_ring[com1_dcb->input_head] = ch;
+	com1_dcb->input_head = next;
 }
 
 static void try_finish_read_with_buffered_data(void)
 {
 	char ch = '\0';
 	int ended_with_newline = 0;
-	while (com1_dcb.reading &&
-		com1_dcb.read_count < com1_dcb.read_size &&
+	while (com1_dcb->reading &&
+		com1_dcb->read_count < com1_dcb->read_size &&
 		ring_pop(&ch)) {
 		if (ch == '\r' || ch == '\n') {
-			com1_dcb.read_buf[com1_dcb.read_count] = '\0';
+			com1_dcb->read_buf[com1_dcb->read_count] = '\0';
 			ended_with_newline = 1;
 			break;
 		}
-		com1_dcb.read_buf[com1_dcb.read_count++] = ch;
+		com1_dcb->read_buf[com1_dcb->read_count++] = ch;
 	}
 
-	if (com1_dcb.reading &&
-		(com1_dcb.read_count == com1_dcb.read_size ||
+	if (com1_dcb->reading &&
+		(com1_dcb->read_count == com1_dcb->read_size ||
 		 ended_with_newline)) {
-		com1_dcb.reading = 0;
-		if (com1_dcb.read_buf != NULL && com1_dcb.read_count < com1_dcb.read_size) {
-			com1_dcb.read_buf[com1_dcb.read_count] = '\0';
+		com1_dcb->reading = 0;
+		if (com1_dcb->read_buf != NULL && com1_dcb->read_count < com1_dcb->read_size) {
+			com1_dcb->read_buf[com1_dcb->read_count] = '\0';
 		}
-		outb(COM1 + IER, IER_RX_INT | (com1_dcb.writing ? IER_TX_INT : 0));
+		outb(COM1 + IER, IER_RX_INT | (com1_dcb->writing ? IER_TX_INT : 0));
 	}
 }
 
@@ -341,7 +328,7 @@ int serial_open(device dev, int speed)
 		return -1;
 	}
 
-	if (com1_dcb.open) {
+	if (com1_dcb->open) {
 		return -1;
 	}
 
@@ -358,36 +345,38 @@ int serial_open(device dev, int speed)
 
 int serial_close(device dev)
 {
-	if (dev != COM1 || !com1_dcb.open) {
+	if (dev != COM1 || !com1_dcb->open) {
 		return -1;
 	}
-	if (com1_dcb.reading || com1_dcb.writing) {
+	if (com1_dcb->reading || com1_dcb->writing) {
 		return -1;
 	}
 
 	outb(COM1 + IER, 0x00);
 	disable_com1_irq();
-	com1_dcb.open = 0;
-	com1_dcb.reading = 0;
-	com1_dcb.writing = 0;
-	com1_dcb.read_buf = NULL;
-	com1_dcb.write_buf = NULL;
-	com1_dcb.read_size = 0;
-	com1_dcb.write_size = 0;
-	com1_dcb.read_count = 0;
-	com1_dcb.write_count = 0;
-	com1_dcb.input_head = 0;
-	com1_dcb.input_tail = 0;
+	com1_dcb->open = 0;
+	com1_dcb->reading = 0;
+	com1_dcb->writing = 0;
+	com1_dcb->read_buf = NULL;
+	com1_dcb->write_buf = NULL;
+	com1_dcb->read_size = 0;
+	com1_dcb->write_size = 0;
+	com1_dcb->read_count = 0;
+	com1_dcb->write_count = 0;
+	com1_dcb->input_head = 0;
+	com1_dcb->input_tail = 0;
+	com1_dcb->iocb_head = NULL;
+	com1_dcb->iocb_tail = NULL;
 	return 0;
 }
 
 int serial_read(device dev, char *buf, size_t size)
 {
-	if (dev != COM1 || !com1_dcb.open || buf == NULL || size == 0) {
+	if (dev != COM1 || !com1_dcb->open || buf == NULL || size == 0) {
 		return -1;
 	}
 
-	if (com1_dcb.reading) {
+	if (com1_dcb->reading) {
 		return -1;
 	}
 
@@ -396,34 +385,34 @@ int serial_read(device dev, char *buf, size_t size)
 		return 0;
 	}
 
-	com1_dcb.read_buf = buf;
-	com1_dcb.read_size = size - 1;
-	com1_dcb.read_count = 0;
-	com1_dcb.reading = 1;
-	com1_dcb.read_buf[0] = '\0';
+	com1_dcb->read_buf = buf;
+	com1_dcb->read_size = size - 1;
+	com1_dcb->read_count = 0;
+	com1_dcb->reading = 1;
+	com1_dcb->read_buf[0] = '\0';
 
 	try_finish_read_with_buffered_data();
-	outb(COM1 + IER, IER_RX_INT | (com1_dcb.writing ? IER_TX_INT : 0));
+	outb(COM1 + IER, IER_RX_INT | (com1_dcb->writing ? IER_TX_INT : 0));
 	return 0;
 }
 
 int serial_write(device dev, const char *buf, size_t size)
 {
-	if (dev != COM1 || !com1_dcb.open || buf == NULL || size == 0) {
+	if (dev != COM1 || !com1_dcb->open || buf == NULL || size == 0) {
 		return -1;
 	}
 
-	if (com1_dcb.writing) {
+	if (com1_dcb->writing) {
 		return -1;
 	}
 
-	com1_dcb.write_buf = buf;
-	com1_dcb.write_size = size;
-	com1_dcb.write_count = 0;
-	com1_dcb.writing = 1;
+	com1_dcb->write_buf = buf;
+	com1_dcb->write_size = size;
+	com1_dcb->write_count = 0;
+	com1_dcb->writing = 1;
 
 	serial_output_interrupt();
-	if (com1_dcb.writing) {
+	if (com1_dcb->writing) {
 		outb(COM1 + IER, IER_RX_INT | IER_TX_INT);
 	}
 	return 0;
@@ -452,18 +441,18 @@ void serial_input_interrupt(void)
 {
 	while (inb(COM1 + LSR) & LSR_DATA_READY) {
 		char ch = (char)inb(COM1 + RBR);
-		if (com1_dcb.reading && com1_dcb.read_count < com1_dcb.read_size) {
+		if (com1_dcb->reading && com1_dcb->read_count < com1_dcb->read_size) {
 			if (ch == '\r' || ch == '\n') {
-				com1_dcb.read_buf[com1_dcb.read_count] = '\0';
-				com1_dcb.reading = 0;
-				outb(COM1 + IER, IER_RX_INT | (com1_dcb.writing ? IER_TX_INT : 0));
+				com1_dcb->read_buf[com1_dcb->read_count] = '\0';
+				com1_dcb->reading = 0;
+				outb(COM1 + IER, IER_RX_INT | (com1_dcb->writing ? IER_TX_INT : 0));
 			} else {
-				com1_dcb.read_buf[com1_dcb.read_count++] = ch;
+				com1_dcb->read_buf[com1_dcb->read_count++] = ch;
 			}
-			if (com1_dcb.reading && com1_dcb.read_count == com1_dcb.read_size) {
-				com1_dcb.read_buf[com1_dcb.read_count] = '\0';
-				com1_dcb.reading = 0;
-				outb(COM1 + IER, IER_RX_INT | (com1_dcb.writing ? IER_TX_INT : 0));
+			if (com1_dcb->reading && com1_dcb->read_count == com1_dcb->read_size) {
+				com1_dcb->read_buf[com1_dcb->read_count] = '\0';
+				com1_dcb->reading = 0;
+				outb(COM1 + IER, IER_RX_INT | (com1_dcb->writing ? IER_TX_INT : 0));
 			}
 		} else {
 			ring_push(ch);
@@ -473,17 +462,17 @@ void serial_input_interrupt(void)
 
 void serial_output_interrupt(void)
 {
-	while (com1_dcb.writing &&
-		com1_dcb.write_count < com1_dcb.write_size &&
+	while (com1_dcb->writing &&
+		com1_dcb->write_count < com1_dcb->write_size &&
 		(inb(COM1 + LSR) & LSR_THR_EMPTY)) {
-		outb(COM1 + THR, com1_dcb.write_buf[com1_dcb.write_count++]);
+		outb(COM1 + THR, com1_dcb->write_buf[com1_dcb->write_count++]);
 	}
 
-	if (com1_dcb.writing && com1_dcb.write_count >= com1_dcb.write_size) {
-		com1_dcb.writing = 0;
-		com1_dcb.write_buf = NULL;
-		com1_dcb.write_size = 0;
-		com1_dcb.write_count = 0;
+	if (com1_dcb->writing && com1_dcb->write_count >= com1_dcb->write_size) {
+		com1_dcb->writing = 0;
+		com1_dcb->write_buf = NULL;
+		com1_dcb->write_size = 0;
+		com1_dcb->write_count = 0;
 		outb(COM1 + IER, IER_RX_INT);
 	}
 }
