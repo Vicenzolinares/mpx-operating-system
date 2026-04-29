@@ -20,7 +20,7 @@ void io_schedule(device device, op_code op, char* buf, size_t len, PCB* current_
             com1_dcb->iocb_tail = iocb;
         }
 
-        if (com1_dcb->open == 0) return;
+        if (com1_dcb->reading == 1 || com1_dcb->writing == 1) return;
         else {
             if (op == READ) serial_read(device, buf, len);
             else serial_write(device, buf, len);
@@ -29,7 +29,7 @@ void io_schedule(device device, op_code op, char* buf, size_t len, PCB* current_
 }
 
 void io_complete(void) {
-    if (com1_dcb->open == 1)
+    if (com1_dcb->reading == 0 && com1_dcb->writing == 0)
     {
         if (com1_dcb->iocb_head == NULL) return;
         unblock_pcb(com1_dcb->iocb_head->pcb->name);
