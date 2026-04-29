@@ -17,6 +17,7 @@ void io_schedule(device device, op_code op, char* buf, size_t len, PCB* current_
         }
         else {
             com1_dcb->iocb_tail->next = iocb;
+            com1_dcb->iocb_tail = iocb;
         }
 
         if (com1_dcb->open == 0) return;
