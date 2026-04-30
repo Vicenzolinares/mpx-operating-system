@@ -5,6 +5,7 @@ static struct context *first_context = NULL;
 
 struct context *sys_call(struct context *cont) {
    
+    io_complete();
 
     if (cont->eax == IDLE)
     {
@@ -70,9 +71,39 @@ struct context *sys_call(struct context *cont) {
         first_context->eax = 0;
         return first_context;
     }
+    // READ or Write
     else
     {
-        cont->eax = -1;
+        current_process->stack_pointer = (unsigned char *) cont;
+        current_process->execution = BLOCKED;
+        pcb_insert(current_process);
+
+        io_schedule(cont->ebx, cont->eax, (char *)cont->ecx, cont->edx, current_process);
+
+        /*
+         * serial_read/serial_write may finish immediately
+         * io_complete() only ran at syscall entry, so without this call the
+         * blocked PCB would stay on the blocked queue until syscall later.
+         */
+        io_complete();
+
+        PCB *new_proc = ready_queue->head;
+        while (new_proc != NULL)
+        {
+            if (new_proc->dispatch == NOT_SUSPENDED)
+            {
+                pcb_remove(new_proc);
+                new_proc->execution = RUNNING;
+
+                current_process = new_proc;
+                ((struct context *)current_process->stack_pointer)->eax = 0;
+                return (struct context *)current_process->stack_pointer;
+            }
+
+            new_proc = new_proc->next;
+        }
+
+        cont->eax = 0;
         return cont;
     }
 }
